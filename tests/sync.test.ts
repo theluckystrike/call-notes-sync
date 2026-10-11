@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { App } from 'obsidian-test-mocks/obsidian';
 import { MeetingClient, classify, fathomQuery, type Http, type HttpReply, type HttpRequest } from '../src/client';
 import { MAX_BATCHES, MIN_GAP_MS, SyncService, emptyState, normalizeState, summary, type SyncOptions } from '../src/sync';
@@ -356,7 +356,10 @@ describe('Fathom only', () => {
 	// The plugin reads one service. A second service needs its own terms check, so no other service name or host stays in the code.
 	const other = ['fire', 'flies'].join('');
 	it('has no other service in the source, the manifest or the network list', () => {
-		const files = readdirSync('src').map((f) => `src/${f}`).concat(['manifest.json', 'package.json', 'product.yaml']);
+		// The exported repo vendors shared code under src/core and has no product.yaml, so walk folders and skip absent files.
+		const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : [`${d}/${e.name}`]));
+		const files = walk('src').concat(['manifest.json', 'package.json', 'product.yaml'].filter((f) => existsSync(f)));
+		expect(files.length).toBeGreaterThan(3);
 		for (const f of files) expect(readFileSync(f, 'utf8').toLowerCase(), f).not.toContain(other);
 	});
 
