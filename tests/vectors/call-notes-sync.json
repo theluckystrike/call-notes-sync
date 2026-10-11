@@ -1,0 +1,2292 @@
+{
+ "slug": "call-notes-sync",
+ "module": "call-notes-sync/src/logic",
+ "function": "evalVector",
+ "note": "args = [fn, args]: fn names an exported function of src/logic.ts and args is its argument list, so each case is {name, fn, args, expected}. Expected values are written by hand from the public Fathom OpenAPI file and its documentation (research/obsidian-run/raw/b5 and raw/c2): the Meeting, Transcript, Summary and ActionItem fields. Unofficial: not made by Fathom.",
+ "cases": [
+  {
+   "name": "fathom row to meeting: calendar title, recording time, length, people, tasks, transcript",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "Quarterly Business Review",
+     "meeting_title": "QBR 2025 Q1",
+     "meeting_type": "Quarterly Business Review",
+     "recording_id": 123456789,
+     "url": "https://fathom.video/xyz123",
+     "share_url": "https://fathom.video/share/xyz123",
+     "created_at": "2025-03-01T17:01:30Z",
+     "scheduled_start_time": "2025-03-01T16:00:00Z",
+     "recording_start_time": "2025-03-01T16:01:12Z",
+     "recording_end_time": "2025-03-01T17:00:55Z",
+     "calendar_invitees": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com",
+       "is_external": false
+      },
+      {
+       "name": null,
+       "email": "Bob@acme.com",
+       "is_external": false
+      }
+     ],
+     "recorded_by": {
+      "name": "Alice Johnson",
+      "email": "alice.johnson@acme.com",
+      "team": "Marketing"
+     },
+     "default_summary": {
+      "template_name": "general",
+      "markdown_formatted": "## Summary\nWe reviewed Q1 OKRs."
+     },
+     "action_items": [
+      {
+       "description": "Email revised proposal to client",
+       "completed": false,
+       "assignee": {
+        "name": "Alice Johnson"
+       }
+      },
+      {
+       "description": "Share the deck",
+       "completed": true,
+       "assignee": {
+        "name": null
+       }
+      }
+     ],
+     "transcript": [
+      {
+       "speaker": {
+        "display_name": "Alice Johnson"
+       },
+       "text": "Let's start.",
+       "timestamp": "00:00:05"
+      },
+      {
+       "speaker": {
+        "display_name": "Bob"
+       },
+       "text": "Ok.",
+       "timestamp": "00:01:05"
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "123456789",
+    "title": "QBR 2025 Q1",
+    "date": "2025-03-01T16:01:12Z",
+    "durationMin": 60,
+    "participants": [
+     {
+      "name": "Alice Johnson",
+      "email": "alice.johnson@acme.com"
+     },
+     {
+      "name": "",
+      "email": "bob@acme.com"
+     }
+    ],
+    "summary": "## Summary\nWe reviewed Q1 OKRs.",
+    "actionItems": [
+     {
+      "text": "Email revised proposal to client",
+      "done": false,
+      "assignee": "Alice Johnson"
+     },
+     {
+      "text": "Share the deck",
+      "done": true,
+      "assignee": ""
+     }
+    ],
+    "url": "https://fathom.video/xyz123",
+    "transcript": [
+     {
+      "speaker": "Alice Johnson",
+      "at": 5,
+      "text": "Let's start."
+     },
+     {
+      "speaker": "Bob",
+      "at": 65,
+      "text": "Ok."
+     }
+    ]
+   }
+  },
+  {
+   "name": "fathom: title falls back, start falls back to the scheduled time, no length, summary and tasks empty",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "Quarterly Business Review",
+     "meeting_type": "Quarterly Business Review",
+     "recording_id": 123456789,
+     "url": "https://fathom.video/xyz123",
+     "share_url": "https://fathom.video/share/xyz123",
+     "created_at": "2025-03-01T17:01:30Z",
+     "scheduled_start_time": "2025-03-01T16:00:00Z",
+     "calendar_invitees": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com",
+       "is_external": false
+      },
+      {
+       "name": null,
+       "email": "Bob@acme.com",
+       "is_external": false
+      }
+     ],
+     "recorded_by": {
+      "name": "Alice Johnson",
+      "email": "alice.johnson@acme.com",
+      "team": "Marketing"
+     }
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "123456789",
+    "title": "Quarterly Business Review",
+    "date": "2025-03-01T16:00:00Z",
+    "durationMin": null,
+    "participants": [
+     {
+      "name": "Alice Johnson",
+      "email": "alice.johnson@acme.com"
+     },
+     {
+      "name": "",
+      "email": "bob@acme.com"
+     }
+    ],
+    "summary": "",
+    "actionItems": [],
+    "url": "https://fathom.video/xyz123",
+    "transcript": null
+   }
+  },
+  {
+   "name": "fathom: row without recording id gives null",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "created_at": "2025-03-01T17:01:30Z"
+    }
+   ],
+   "expected": null
+  },
+  {
+   "name": "fathom: row without any time gives null",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5
+    }
+   ],
+   "expected": null
+  },
+  {
+   "name": "fathom: link falls back to share_url",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5,
+     "created_at": "2025-03-01T17:01:30Z",
+     "share_url": "https://fathom.video/share/q"
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "5",
+    "title": "A",
+    "date": "2025-03-01T17:01:30Z",
+    "durationMin": null,
+    "participants": [],
+    "summary": "",
+    "actionItems": [],
+    "url": "https://fathom.video/share/q",
+    "transcript": null
+   }
+  },
+  {
+   "name": "fathom: null summary markdown gives empty summary",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5,
+     "created_at": "2025-03-01T17:01:30Z",
+     "default_summary": {
+      "template_name": null,
+      "markdown_formatted": null
+     }
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "5",
+    "title": "A",
+    "date": "2025-03-01T17:01:30Z",
+    "durationMin": null,
+    "participants": [],
+    "summary": "",
+    "actionItems": [],
+    "url": "",
+    "transcript": null
+   }
+  },
+  {
+   "name": "clock 00:05:32",
+   "fn": "parseClock",
+   "args": [
+    "00:05:32"
+   ],
+   "expected": 332
+  },
+  {
+   "name": "clock 1:02:03",
+   "fn": "parseClock",
+   "args": [
+    "1:02:03"
+   ],
+   "expected": 3723
+  },
+  {
+   "name": "clock mm:ss",
+   "fn": "parseClock",
+   "args": [
+    "12:30"
+   ],
+   "expected": 750
+  },
+  {
+   "name": "clock rejects text",
+   "fn": "parseClock",
+   "args": [
+    "soon"
+   ],
+   "expected": null
+  },
+  {
+   "name": "isoStamp from ISO with fraction",
+   "fn": "isoStamp",
+   "args": [
+    "2026-10-08T09:00:00.456Z"
+   ],
+   "expected": "2026-10-08T09:00:00Z"
+  },
+  {
+   "name": "isoStamp from offset time",
+   "fn": "isoStamp",
+   "args": [
+    "2026-10-08T16:00:00+07:00"
+   ],
+   "expected": "2026-10-08T09:00:00Z"
+  },
+  {
+   "name": "isoStamp from epoch milliseconds",
+   "fn": "isoStamp",
+   "args": [
+    1791450000000
+   ],
+   "expected": "2026-10-08T09:00:00Z"
+  },
+  {
+   "name": "isoStamp from epoch text",
+   "fn": "isoStamp",
+   "args": [
+    "1791450000000"
+   ],
+   "expected": "2026-10-08T09:00:00Z"
+  },
+  {
+   "name": "isoStamp rejects text",
+   "fn": "isoStamp",
+   "args": [
+    "not a date"
+   ],
+   "expected": ""
+  },
+  {
+   "name": "isoStamp rejects empty",
+   "fn": "isoStamp",
+   "args": [
+    ""
+   ],
+   "expected": ""
+  },
+  {
+   "name": "isoStamp rejects a year past 2100",
+   "fn": "isoStamp",
+   "args": [
+    5000000000000
+   ],
+   "expected": ""
+  },
+  {
+   "name": "safeUrl accepts https",
+   "fn": "safeUrl",
+   "args": [
+    "https://fathom.video/calls/1?t=2"
+   ],
+   "expected": "https://fathom.video/calls/1?t=2"
+  },
+  {
+   "name": "safeUrl rejects http",
+   "fn": "safeUrl",
+   "args": [
+    "http://fathom.video/x"
+   ],
+   "expected": ""
+  },
+  {
+   "name": "safeUrl rejects parentheses",
+   "fn": "safeUrl",
+   "args": [
+    "https://x.test/a(b)"
+   ],
+   "expected": ""
+  },
+  {
+   "name": "safeUrl rejects a space",
+   "fn": "safeUrl",
+   "args": [
+    "https://x.test/a b"
+   ],
+   "expected": ""
+  },
+  {
+   "name": "mergePeople: one email once, a name fills the gap",
+   "fn": "mergePeople",
+   "args": [
+    [
+     {
+      "name": "",
+      "email": "a@x.test"
+     },
+     {
+      "name": "Ann",
+      "email": "a@x.test"
+     },
+     {
+      "name": "Bo",
+      "email": ""
+     },
+     {
+      "name": "bo",
+      "email": ""
+     },
+     {
+      "name": "",
+      "email": ""
+     }
+    ]
+   ],
+   "expected": [
+    {
+     "name": "Ann",
+     "email": "a@x.test"
+    },
+    {
+     "name": "Bo",
+     "email": ""
+    }
+   ]
+  },
+  {
+   "name": "meetingKey joins source and id",
+   "fn": "meetingKey",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "77"
+    }
+   ],
+   "expected": "fathom:77"
+  },
+  {
+   "name": "ready: a young meeting with no summary waits",
+   "fn": "isReady",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    1791622800000
+   ],
+   "expected": false
+  },
+  {
+   "name": "ready: an old meeting with no summary is made anyway",
+   "fn": "isReady",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-01T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    1791622800000
+   ],
+   "expected": true
+  },
+  {
+   "name": "ready: a young meeting with a summary is ready",
+   "fn": "isReady",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "Done.",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    1791622800000
+   ],
+   "expected": true
+  },
+  {
+   "name": "ready: action items alone are enough",
+   "fn": "isReady",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [
+      {
+       "text": "x",
+       "done": false,
+       "assignee": ""
+      }
+     ],
+     "url": "",
+     "transcript": null
+    },
+    1791622800000
+   ],
+   "expected": true
+  },
+  {
+   "name": "localDate in UTC",
+   "fn": "localDate",
+   "args": [
+    "2026-10-08T23:30:00Z",
+    0
+   ],
+   "expected": "2026-10-08"
+  },
+  {
+   "name": "localDate crosses midnight at +07:00",
+   "fn": "localDate",
+   "args": [
+    "2026-10-08T23:30:00Z",
+    420
+   ],
+   "expected": "2026-10-09"
+  },
+  {
+   "name": "localDate crosses back at -05:00",
+   "fn": "localDate",
+   "args": [
+    "2026-10-08T03:30:00Z",
+    -300
+   ],
+   "expected": "2026-10-07"
+  },
+  {
+   "name": "localTime at +05:30",
+   "fn": "localTime",
+   "args": [
+    "2026-10-08T09:00:00Z",
+    330
+   ],
+   "expected": "14:30"
+  },
+  {
+   "name": "localDate of bad text is empty",
+   "fn": "localDate",
+   "args": [
+    "x",
+    0
+   ],
+   "expected": ""
+  },
+  {
+   "name": "formatDate default",
+   "fn": "formatDate",
+   "args": [
+    "2026-10-08T09:00:00Z",
+    "YYYY-MM-DD",
+    0
+   ],
+   "expected": "2026-10-08"
+  },
+  {
+   "name": "formatDate with names and a bracket",
+   "fn": "formatDate",
+   "args": [
+    "2026-10-08T09:00:00Z",
+    "dddd, D MMMM YYYY [at] M",
+    0
+   ],
+   "expected": "Thursday, 8 October 2026 at 10"
+  },
+  {
+   "name": "formatDate short names",
+   "fn": "formatDate",
+   "args": [
+    "2026-03-01T09:00:00Z",
+    "ddd MMM DD YY",
+    0
+   ],
+   "expected": "Sun Mar 01 26"
+  },
+  {
+   "name": "formatDate uses the zone",
+   "fn": "formatDate",
+   "args": [
+    "2026-10-08T23:30:00Z",
+    "YYYY-MM-DD",
+    420
+   ],
+   "expected": "2026-10-09"
+  },
+  {
+   "name": "sanitize: path characters",
+   "fn": "sanitizeFileName",
+   "args": [
+    "Q3: plan / review | draft?"
+   ],
+   "expected": "Q3 - plan review - draft"
+  },
+  {
+   "name": "sanitize: link characters",
+   "fn": "sanitizeFileName",
+   "args": [
+    "Notes #1 [A] ^b"
+   ],
+   "expected": "Notes 1 A b"
+  },
+  {
+   "name": "sanitize: reserved name",
+   "fn": "sanitizeFileName",
+   "args": [
+    "CON"
+   ],
+   "expected": "_CON"
+  },
+  {
+   "name": "sanitize: empty gives Untitled",
+   "fn": "sanitizeFileName",
+   "args": [
+    "???"
+   ],
+   "expected": "Untitled"
+  },
+  {
+   "name": "sanitize: cut to the limit",
+   "fn": "sanitizeFileName",
+   "args": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    10
+   ],
+   "expected": "aaaaaaaaaa"
+  },
+  {
+   "name": "shortHash is FNV-1a",
+   "fn": "shortHash",
+   "args": [
+    "fathom:01HX9ABC"
+   ],
+   "expected": "5a43c42c"
+  },
+  {
+   "name": "file name default template",
+   "fn": "renderFileName",
+   "args": [
+    "{date} {title}",
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    0
+   ],
+   "expected": "2026-10-08 Weekly sync"
+  },
+  {
+   "name": "file name uses the zone, time and source",
+   "fn": "renderFileName",
+   "args": [
+    "{title} {date} {time} {source}",
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    420
+   ],
+   "expected": "Weekly sync 2026-10-08 16.00 Fathom"
+  },
+  {
+   "name": "file name id token",
+   "fn": "renderFileName",
+   "args": [
+    "{title} {id}",
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    0
+   ],
+   "expected": "Weekly sync 5a43c42c"
+  },
+  {
+   "name": "file name unknown token is empty",
+   "fn": "renderFileName",
+   "args": [
+    "{title}{nope}",
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    0
+   ],
+   "expected": "Weekly sync"
+  },
+  {
+   "name": "uniqueName free",
+   "fn": "uniqueName",
+   "args": [
+    "A",
+    [],
+    "h"
+   ],
+   "expected": "A"
+  },
+  {
+   "name": "uniqueName second",
+   "fn": "uniqueName",
+   "args": [
+    "A",
+    [
+     "A"
+    ],
+    "h"
+   ],
+   "expected": "A (2)"
+  },
+  {
+   "name": "uniqueName third",
+   "fn": "uniqueName",
+   "args": [
+    "A",
+    [
+     "A",
+     "A (2)"
+    ],
+    "h"
+   ],
+   "expected": "A (3)"
+  },
+  {
+   "name": "normalizeFolder cleans parts",
+   "fn": "normalizeFolder",
+   "args": [
+    "/Meetings/../Q3: x//"
+   ],
+   "expected": "Meetings/Q3 x"
+  },
+  {
+   "name": "normalizeFolder empty stays empty",
+   "fn": "normalizeFolder",
+   "args": [
+    ""
+   ],
+   "expected": ""
+  },
+  {
+   "name": "normalizeTemplate empty gives default",
+   "fn": "normalizeTemplate",
+   "args": [
+    "  "
+   ],
+   "expected": "{date} {title}"
+  },
+  {
+   "name": "front matter has source, id, title, date, length, people and link",
+   "fn": "renderFrontmatter",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "## Summary\nWe reviewed Q1 OKRs.\n\n## Next\nRevisit next month.",
+     "actionItems": [
+      {
+       "text": "Email revised proposal",
+       "done": false,
+       "assignee": "Alice Johnson"
+      },
+      {
+       "text": "Share deck",
+       "done": true,
+       "assignee": ""
+      }
+     ],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"123456789\"\ntitle: \"Quarterly Business Review\"\ndate: 2026-03-01T16:01:12Z\nduration_minutes: 60\nparticipants:\n  - \"Alice Johnson\"\n  - \"bob@acme.com\"\nurl: \"https://fathom.video/xyz123\"\n---\n"
+  },
+  {
+   "name": "front matter without people, length or link",
+   "fn": "renderFrontmatter",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"abcd\"\ntitle: \"A\"\ndate: 2026-10-09T09:00:00Z\nparticipants: []\n---\n"
+  },
+  {
+   "name": "front matter keeps a quote in the title safe",
+   "fn": "renderFrontmatter",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "Say \"hi\"",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"abcd\"\ntitle: \"Say \\\"hi\\\"\"\ndate: 2026-10-09T09:00:00Z\nparticipants: []\n---\n"
+  },
+  {
+   "name": "demote: levels keep their distance",
+   "fn": "demoteHeadings",
+   "args": [
+    "# C\ntext\n## A\n### B"
+   ],
+   "expected": "### C\ntext\n#### A\n##### B"
+  },
+  {
+   "name": "demote: two headings at level 2 move to 3",
+   "fn": "demoteHeadings",
+   "args": [
+    "## Summary\nx\n## Next\ny"
+   ],
+   "expected": "### Summary\nx\n### Next\ny"
+  },
+  {
+   "name": "demote: level 3 and deeper stay",
+   "fn": "demoteHeadings",
+   "args": [
+    "### A\n#### B"
+   ],
+   "expected": "### A\n#### B"
+  },
+  {
+   "name": "demote: a heading inside a code fence stays",
+   "fn": "demoteHeadings",
+   "args": [
+    "## A\n```\n# not a heading\n```"
+   ],
+   "expected": "### A\n```\n# not a heading\n```"
+  },
+  {
+   "name": "demote: hashtags without a space stay",
+   "fn": "demoteHeadings",
+   "args": [
+    "#tag\n## A"
+   ],
+   "expected": "#tag\n### A"
+  },
+  {
+   "name": "actions: tasks with assignee and done state",
+   "fn": "renderActions",
+   "args": [
+    [
+     {
+      "text": "Email revised proposal",
+      "done": false,
+      "assignee": "Alice Johnson"
+     },
+     {
+      "text": "Share deck",
+      "done": true,
+      "assignee": ""
+     }
+    ]
+   ],
+   "expected": "- [ ] Email revised proposal (Alice Johnson)\n- [x] Share deck"
+  },
+  {
+   "name": "actions: none",
+   "fn": "renderActions",
+   "args": [
+    []
+   ],
+   "expected": "_No action items._"
+  },
+  {
+   "name": "actions: a comment marker is made harmless",
+   "fn": "renderActions",
+   "args": [
+    [
+     {
+      "text": "a <!-- b --> c",
+      "done": false,
+      "assignee": ""
+     }
+    ]
+   ],
+   "expected": "- [ ] a &lt;!-- b --&gt; c"
+  },
+  {
+   "name": "clock under an hour",
+   "fn": "clock",
+   "args": [
+    65
+   ],
+   "expected": "1:05"
+  },
+  {
+   "name": "clock over an hour",
+   "fn": "clock",
+   "args": [
+    3725
+   ],
+   "expected": "1:02:05"
+  },
+  {
+   "name": "transcript: one paragraph per speaker turn with the first time",
+   "fn": "renderTranscript",
+   "args": [
+    [
+     {
+      "speaker": "Ann",
+      "at": 0,
+      "text": "Hello."
+     },
+     {
+      "speaker": "Ann",
+      "at": 4,
+      "text": "Welcome."
+     },
+     {
+      "speaker": "Bo",
+      "at": 65,
+      "text": "Hi."
+     },
+     {
+      "speaker": "",
+      "at": null,
+      "text": "Noise."
+     },
+     {
+      "speaker": "Ann",
+      "at": 3700,
+      "text": "Bye."
+     }
+    ]
+   ],
+   "expected": "**Ann** (0:00): Hello. Welcome.\n\n**Bo** (1:05): Hi.\n\n**Unknown speaker**: Noise.\n\n**Ann** (1:01:40): Bye."
+  },
+  {
+   "name": "note: Fathom meeting with default body",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "## Summary\nWe reviewed Q1 OKRs.\n\n## Next\nRevisit next month.",
+     "actionItems": [
+      {
+       "text": "Email revised proposal",
+       "done": false,
+       "assignee": "Alice Johnson"
+      },
+      {
+       "text": "Share deck",
+       "done": true,
+       "assignee": ""
+      }
+     ],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "transcript": false,
+     "body": ""
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"123456789\"\ntitle: \"Quarterly Business Review\"\ndate: 2026-03-01T16:01:12Z\nduration_minutes: 60\nparticipants:\n  - \"Alice Johnson\"\n  - \"bob@acme.com\"\nurl: \"https://fathom.video/xyz123\"\n---\n\n# Quarterly Business Review\n\n**When:** 2026-03-01 16:01, 60 min  \n**Participants:** Alice Johnson, bob@acme.com  \n**Source:** [Open in Fathom](https://fathom.video/xyz123)\n\n## Summary\n\n### Summary\nWe reviewed Q1 OKRs.\n\n### Next\nRevisit next month.\n\n## Action items\n\n- [ ] Email revised proposal (Alice Johnson)\n- [x] Share deck\n"
+  },
+  {
+   "name": "note: Pro transcript is added under the action items",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "Short summary.",
+     "actionItems": [
+      {
+       "text": "Email revised proposal",
+       "done": false,
+       "assignee": "Alice Johnson"
+      },
+      {
+       "text": "Share deck",
+       "done": true,
+       "assignee": ""
+      }
+     ],
+     "url": "https://fathom.video/xyz123",
+     "transcript": [
+      {
+       "speaker": "Alice Johnson",
+       "at": 5,
+       "text": "Let's start."
+      },
+      {
+       "speaker": "Bob",
+       "at": 65,
+       "text": "Ok."
+      }
+     ]
+    },
+    {
+     "tzMin": 0,
+     "transcript": true,
+     "body": ""
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"123456789\"\ntitle: \"Quarterly Business Review\"\ndate: 2026-03-01T16:01:12Z\nduration_minutes: 60\nparticipants:\n  - \"Alice Johnson\"\n  - \"bob@acme.com\"\nurl: \"https://fathom.video/xyz123\"\n---\n\n# Quarterly Business Review\n\n**When:** 2026-03-01 16:01, 60 min  \n**Participants:** Alice Johnson, bob@acme.com  \n**Source:** [Open in Fathom](https://fathom.video/xyz123)\n\n## Summary\n\nShort summary.\n\n## Action items\n\n- [ ] Email revised proposal (Alice Johnson)\n- [x] Share deck\n\n## Transcript\n\n**Alice Johnson** (0:05): Let's start.\n\n**Bob** (1:05): Ok.\n"
+  },
+  {
+   "name": "note: transcript left out when Pro is off",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "Short summary.",
+     "actionItems": [
+      {
+       "text": "Email revised proposal",
+       "done": false,
+       "assignee": "Alice Johnson"
+      },
+      {
+       "text": "Share deck",
+       "done": true,
+       "assignee": ""
+      }
+     ],
+     "url": "https://fathom.video/xyz123",
+     "transcript": [
+      {
+       "speaker": "Alice Johnson",
+       "at": 5,
+       "text": "Let's start."
+      },
+      {
+       "speaker": "Bob",
+       "at": 65,
+       "text": "Ok."
+      }
+     ]
+    },
+    {
+     "tzMin": 0,
+     "transcript": false,
+     "body": ""
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"123456789\"\ntitle: \"Quarterly Business Review\"\ndate: 2026-03-01T16:01:12Z\nduration_minutes: 60\nparticipants:\n  - \"Alice Johnson\"\n  - \"bob@acme.com\"\nurl: \"https://fathom.video/xyz123\"\n---\n\n# Quarterly Business Review\n\n**When:** 2026-03-01 16:01, 60 min  \n**Participants:** Alice Johnson, bob@acme.com  \n**Source:** [Open in Fathom](https://fathom.video/xyz123)\n\n## Summary\n\nShort summary.\n\n## Action items\n\n- [ ] Email revised proposal (Alice Johnson)\n- [x] Share deck\n"
+  },
+  {
+   "name": "note: custom body template with tokens and the zone",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "Short summary.",
+     "actionItems": [
+      {
+       "text": "Email revised proposal",
+       "done": false,
+       "assignee": "Alice Johnson"
+      },
+      {
+       "text": "Share deck",
+       "done": true,
+       "assignee": ""
+      }
+     ],
+     "url": "https://fathom.video/xyz123",
+     "transcript": [
+      {
+       "speaker": "Alice Johnson",
+       "at": 5,
+       "text": "Let's start."
+      },
+      {
+       "speaker": "Bob",
+       "at": 65,
+       "text": "Ok."
+      }
+     ]
+    },
+    {
+     "tzMin": 420,
+     "transcript": false,
+     "body": "{{title}} on {{date}} at {{time}} ({{duration}} min, {{source}}, id {{id}})\nWith: {{participants}}\n{{actions}}\nLink: {{link}} {{nope}}"
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"123456789\"\ntitle: \"Quarterly Business Review\"\ndate: 2026-03-01T16:01:12Z\nduration_minutes: 60\nparticipants:\n  - \"Alice Johnson\"\n  - \"bob@acme.com\"\nurl: \"https://fathom.video/xyz123\"\n---\n\n# Quarterly Business Review\n\nQuarterly Business Review on 2026-03-01 at 23:01 (60 min, Fathom, id 123456789)\nWith: Alice Johnson, bob@acme.com\n- [ ] Email revised proposal (Alice Johnson)\n- [x] Share deck\nLink: https://fathom.video/xyz123\n"
+  },
+  {
+   "name": "note: no summary says so",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "transcript": false,
+     "body": ""
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"abcd\"\ntitle: \"A\"\ndate: 2026-10-09T09:00:00Z\nparticipants: []\n---\n\n# A\n\n**When:** 2026-10-09 09:00  \n**Source:** Fathom\n\n## Summary\n\n_No summary was available when this note was made._\n\n## Action items\n\n_No action items._\n"
+  },
+  {
+   "name": "filters off pass",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "",
+     "participants": ""
+    },
+    0
+   ],
+   "expected": true
+  },
+  {
+   "name": "filter from: before is out",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "2026-10-09",
+     "to": "",
+     "participants": ""
+    },
+    0
+   ],
+   "expected": false
+  },
+  {
+   "name": "filter from: the zone moves the day",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "2026-10-09",
+     "to": "",
+     "participants": ""
+    },
+    420
+   ],
+   "expected": true
+  },
+  {
+   "name": "filter to: after is out",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "2026-10-07",
+     "participants": ""
+    },
+    0
+   ],
+   "expected": false
+  },
+  {
+   "name": "filter to: same day passes",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "2026-10-08",
+     "participants": ""
+    },
+    0
+   ],
+   "expected": true
+  },
+  {
+   "name": "filter participant by name part",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "",
+     "participants": "MARIA"
+    },
+    0
+   ],
+   "expected": true
+  },
+  {
+   "name": "filter participant by email",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "",
+     "participants": "ops@example.com"
+    },
+    0
+   ],
+   "expected": true
+  },
+  {
+   "name": "filter participant: any term matches",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "",
+     "participants": "zed; ops@"
+    },
+    0
+   ],
+   "expected": true
+  },
+  {
+   "name": "filter participant: no match is out",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Maria Lopez",
+       "email": "maria@acme.com"
+      },
+      {
+       "name": "",
+       "email": "ops@example.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "",
+     "participants": "zed"
+    },
+    0
+   ],
+   "expected": false
+  },
+  {
+   "name": "filter participant on a meeting with nobody is out",
+   "fn": "passesFilters",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "from": "",
+     "to": "",
+     "participants": "zed"
+    },
+    0
+   ],
+   "expected": false
+  },
+  {
+   "name": "normalizeDay accepts a date",
+   "fn": "normalizeDay",
+   "args": [
+    " 2026-02-28 "
+   ],
+   "expected": "2026-02-28"
+  },
+  {
+   "name": "normalizeDay rejects 30 February",
+   "fn": "normalizeDay",
+   "args": [
+    "2026-02-30"
+   ],
+   "expected": ""
+  },
+  {
+   "name": "normalizeDay rejects text",
+   "fn": "normalizeDay",
+   "args": [
+    "yesterday"
+   ],
+   "expected": ""
+  },
+  {
+   "name": "window from an empty cursor is open",
+   "fn": "windowFrom",
+   "args": [
+    {
+     "since": null,
+     "until": null,
+     "high": null
+    }
+   ],
+   "expected": null
+  },
+  {
+   "name": "window from a cursor goes back 48 hours",
+   "fn": "windowFrom",
+   "args": [
+    {
+     "since": "2026-10-08T09:00:00Z",
+     "until": null,
+     "high": null
+    }
+   ],
+   "expected": "2026-10-06T09:00:00Z"
+  },
+  {
+   "name": "window with a custom overlap",
+   "fn": "windowFrom",
+   "args": [
+    {
+     "since": "2026-10-08T09:00:00Z",
+     "until": null,
+     "high": null
+    },
+    3600000
+   ],
+   "expected": "2026-10-08T08:00:00Z"
+  },
+  {
+   "name": "cursor: a finished run moves since to the newest meeting",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": null,
+     "until": null,
+     "high": null
+    },
+    [
+     "2026-10-01T09:00:00Z",
+     "2026-10-05T09:00:00Z",
+     "2026-10-03T09:00:00Z"
+    ],
+    false
+   ],
+   "expected": {
+    "since": "2026-10-05T09:00:00Z",
+    "until": null,
+    "high": null
+   }
+  },
+  {
+   "name": "cursor: a run with no meetings keeps since",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": "2026-10-05T09:00:00Z",
+     "until": null,
+     "high": null
+    },
+    [],
+    false
+   ],
+   "expected": {
+    "since": "2026-10-05T09:00:00Z",
+    "until": null,
+    "high": null
+   }
+  },
+  {
+   "name": "cursor: since never moves back",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": "2026-10-05T09:00:00Z",
+     "until": null,
+     "high": null
+    },
+    [
+     "2026-10-01T09:00:00Z"
+    ],
+    false
+   ],
+   "expected": {
+    "since": "2026-10-05T09:00:00Z",
+    "until": null,
+    "high": null
+   }
+  },
+  {
+   "name": "cursor: a capped newest-first run continues before the oldest",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": null,
+     "until": null,
+     "high": null
+    },
+    [
+     "2026-10-09T09:00:00Z",
+     "2026-10-05T09:00:00Z",
+     "2026-10-02T09:00:00Z"
+    ],
+    true
+   ],
+   "expected": {
+    "since": null,
+    "until": "2026-10-02T09:00:00Z",
+    "high": "2026-10-09T09:00:00Z"
+   }
+  },
+  {
+   "name": "cursor: the run that ends a window moves since to the high mark",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": null,
+     "until": "2026-10-02T09:00:00Z",
+     "high": "2026-10-09T09:00:00Z"
+    },
+    [
+     "2026-10-01T09:00:00Z",
+     "2026-09-20T09:00:00Z"
+    ],
+    false
+   ],
+   "expected": {
+    "since": "2026-10-09T09:00:00Z",
+    "until": null,
+    "high": null
+   }
+  },
+  {
+   "name": "cursor: a capped oldest-first run continues after the newest",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": null,
+     "until": null,
+     "high": null
+    },
+    [
+     "2026-09-01T09:00:00Z",
+     "2026-09-05T09:00:00Z",
+     "2026-09-09T09:00:00Z"
+    ],
+    true
+   ],
+   "expected": {
+    "since": "2026-09-09T09:00:00Z",
+    "until": null,
+    "high": null
+   }
+  },
+  {
+   "name": "cursor: a capped run with no dates changes nothing",
+   "fn": "nextCursor",
+   "args": [
+    {
+     "since": "2026-10-05T09:00:00Z",
+     "until": null,
+     "high": null
+    },
+    [],
+    true
+   ],
+   "expected": {
+    "since": "2026-10-05T09:00:00Z",
+    "until": null,
+    "high": null
+   }
+  },
+  {
+   "name": "daily path default format",
+   "fn": "dailyNotePath",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    "Daily",
+    "",
+    0
+   ],
+   "expected": "Daily/2026-10-08.md"
+  },
+  {
+   "name": "daily path with a format, folder and zone",
+   "fn": "dailyNotePath",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T23:30:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    "/Journal/2026/",
+    "YYYY-MM-DD dddd",
+    420
+   ],
+   "expected": "Journal/2026/2026-10-09 Friday.md"
+  },
+  {
+   "name": "daily path in the vault root",
+   "fn": "dailyNotePath",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    "",
+    "DD.MM.YYYY",
+    0
+   ],
+   "expected": "08.10.2026.md"
+  },
+  {
+   "name": "daily path: slash in the format becomes a dash",
+   "fn": "dailyNotePath",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    "Daily",
+    "YYYY/MM/DD",
+    0
+   ],
+   "expected": "Daily/2026-10-08.md"
+  },
+  {
+   "name": "daily line has the local time and a link",
+   "fn": "dailyLine",
+   "args": [
+    "Meetings/2026-10-08 Weekly sync.md",
+    {
+     "provider": "fathom",
+     "id": "01HX9ABC",
+     "title": "Weekly sync",
+     "date": "2026-10-08T09:00:00Z",
+     "durationMin": 32,
+     "participants": [
+      {
+       "name": "Alice Reed",
+       "email": "alice@example.com"
+      },
+      {
+       "name": "Bob Stone",
+       "email": "bob@example.com"
+      }
+     ],
+     "summary": "We agreed to ship on Friday.",
+     "actionItems": [
+      {
+       "text": "Send the report by Friday",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Book the room",
+       "done": false,
+       "assignee": "Alice Reed"
+      },
+      {
+       "text": "Review the PR",
+       "done": false,
+       "assignee": "Bob Stone"
+      }
+     ],
+     "url": "https://fathom.video/calls/01HX9ABC",
+     "transcript": null
+    },
+    420
+   ],
+   "expected": "- 16:00 [[2026-10-08 Weekly sync]]"
+  },
+  {
+   "name": "link: a missing heading is added at the end",
+   "fn": "addLinkUnderHeading",
+   "args": [
+    "# Thursday\n\nText\n",
+    "## Meetings",
+    "- 09:00 [[A]]"
+   ],
+   "expected": "# Thursday\n\nText\n\n## Meetings\n\n- 09:00 [[A]]\n"
+  },
+  {
+   "name": "link: an empty daily note gets the heading",
+   "fn": "addLinkUnderHeading",
+   "args": [
+    "",
+    "## Meetings",
+    "- 09:00 [[A]]"
+   ],
+   "expected": "## Meetings\n\n- 09:00 [[A]]\n"
+  },
+  {
+   "name": "link: added at the end of an existing section",
+   "fn": "addLinkUnderHeading",
+   "args": [
+    "## Meetings\n\n- 08:00 [[B]]\n\n## Tasks\n\n- x\n",
+    "## Meetings",
+    "- 09:00 [[A]]"
+   ],
+   "expected": "## Meetings\n\n- 08:00 [[B]]\n- 09:00 [[A]]\n\n## Tasks\n\n- x\n"
+  },
+  {
+   "name": "link: the same line is not added twice",
+   "fn": "addLinkUnderHeading",
+   "args": [
+    "## Meetings\n\n- 09:00 [[A]]\n",
+    "## Meetings",
+    "- 09:00 [[A]]"
+   ],
+   "expected": "## Meetings\n\n- 09:00 [[A]]\n"
+  },
+  {
+   "name": "link: a section at the end of the file",
+   "fn": "addLinkUnderHeading",
+   "args": [
+    "## Meetings\n\n- 08:00 [[B]]",
+    "## Meetings",
+    "- 09:00 [[A]]"
+   ],
+   "expected": "## Meetings\n\n- 08:00 [[B]]\n- 09:00 [[A]]"
+  },
+  {
+   "name": "link: a deeper heading does not end the section",
+   "fn": "addLinkUnderHeading",
+   "args": [
+    "## Meetings\n### Notes\ntext\n## Tasks\n",
+    "## Meetings",
+    "- 09:00 [[A]]"
+   ],
+   "expected": "## Meetings\n### Notes\ntext\n- 09:00 [[A]]\n## Tasks\n"
+  },
+  {
+   "name": "fathom: a row that is not an object gives null",
+   "fn": "parseFathom",
+   "args": [
+    "text"
+   ],
+   "expected": null
+  },
+  {
+   "name": "fathom: an end time before the start gives no length",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5,
+     "recording_start_time": "2025-03-01T17:01:30Z",
+     "recording_end_time": "2025-03-01T16:00:00Z"
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "5",
+    "title": "A",
+    "date": "2025-03-01T17:01:30Z",
+    "durationMin": null,
+    "participants": [],
+    "summary": "",
+    "actionItems": [],
+    "url": "",
+    "transcript": null
+   }
+  },
+  {
+   "name": "fathom: a done task with no assignee, and a task with no text is dropped",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5,
+     "created_at": "2025-03-01T17:01:30Z",
+     "action_items": [
+      {
+       "description": "  Send   the deck ",
+       "completed": true,
+       "assignee": null
+      },
+      {
+       "description": "",
+       "completed": false
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "5",
+    "title": "A",
+    "date": "2025-03-01T17:01:30Z",
+    "durationMin": null,
+    "participants": [],
+    "summary": "",
+    "actionItems": [
+     {
+      "text": "Send the deck",
+      "done": true,
+      "assignee": ""
+     }
+    ],
+    "url": "",
+    "transcript": null
+   }
+  },
+  {
+   "name": "fathom: an http link is not used, the share link is",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5,
+     "created_at": "2025-03-01T17:01:30Z",
+     "url": "http://fathom.video/x",
+     "share_url": "https://fathom.video/share/x"
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "5",
+    "title": "A",
+    "date": "2025-03-01T17:01:30Z",
+    "durationMin": null,
+    "participants": [],
+    "summary": "",
+    "actionItems": [],
+    "url": "https://fathom.video/share/x",
+    "transcript": null
+   }
+  },
+  {
+   "name": "fathom: transcript lines keep speaker and time, a blank line is dropped",
+   "fn": "parseFathom",
+   "args": [
+    {
+     "title": "A",
+     "recording_id": 5,
+     "created_at": "2025-03-01T17:01:30Z",
+     "transcript": [
+      {
+       "speaker": {
+        "display_name": "Ann Lee"
+       },
+       "text": "Hello   team.",
+       "timestamp": "00:05:32"
+      },
+      {
+       "speaker": {
+        "display_name": "Ann Lee"
+       },
+       "text": "  ",
+       "timestamp": "00:05:40"
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "provider": "fathom",
+    "id": "5",
+    "title": "A",
+    "date": "2025-03-01T17:01:30Z",
+    "durationMin": null,
+    "participants": [],
+    "summary": "",
+    "actionItems": [],
+    "url": "",
+    "transcript": [
+     {
+      "speaker": "Ann Lee",
+      "at": 332,
+      "text": "Hello team."
+     }
+    ]
+   }
+  }
+ ]
+}
