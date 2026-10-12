@@ -150,8 +150,8 @@ describe('sync with Fathom', () => {
 		await r.svc.run();
 		const res = await r.svc.run();
 		expect(res).toMatchObject({ created: 0, existing: 1 });
-		expect(r.calls[1]?.payload).toBe(fathomQuery('2026-10-06T09:00:00Z', null, null, false));
-		expect(r.svc.state.cursors.fathom.since).toBe('2026-10-08T09:00:00Z');
+		expect(r.calls[1]?.payload).toBe(fathomQuery('2026-10-06T10:00:00Z', null, null, false));
+		expect(r.svc.state.cursors.fathom.since).toBe('2026-10-08T10:00:00Z');
 	});
 
 	it('never changes a note that exists', async () => {
@@ -241,6 +241,20 @@ describe('sync with Fathom', () => {
 		expect(res).toMatchObject({ created: 1, waiting: 0 });
 	});
 
+	it('a capped run continues before the oldest created time, so a meeting that overlaps the page edge is not lost', async () => {
+		// Each meeting is made in Fathom 30 minutes after it starts, and starts 20 minutes after the one before it.
+		const t = (ms: number): string => new Date(ms).toISOString().replace('.000Z', 'Z');
+		const base = Date.parse('2026-10-09T00:00:00Z');
+		const rows = Array.from({ length: PAGE * MAX_BATCHES + 1 }, (_v, i) => {
+			const start = base - i * 20 * 60_000;
+			return row(`m${String(i).padStart(4, '0')}`, 1, { recording_start_time: t(start), recording_end_time: t(start + 15 * 60_000), created_at: t(start + 30 * 60_000) });
+		});
+		const r = rig(rows);
+		expect(await r.svc.run()).toMatchObject({ more: true, created: PAGE * MAX_BATCHES });
+		expect(await r.svc.run()).toMatchObject({ more: false, created: 1 });
+		expect(Object.keys(r.svc.state.meetings)).toHaveLength(PAGE * MAX_BATCHES + 1);
+	}, 30_000);
+
 	it('adopts a note with the same meeting id when the sync state is lost', async () => {
 		const r = rig([row('aaaa1', 8)]);
 		await r.app.vault.createFolder('Elsewhere');
@@ -310,7 +324,7 @@ describe('Pro options', () => {
 		r.opts.filters = { from: '', to: '', participants: 'zed' };
 		const res = await r.svc.run();
 		expect(res).toMatchObject({ created: 1, filtered: 1 });
-		expect(r.svc.state.cursors.fathom.since).toBe('2026-10-09T09:00:00Z');
+		expect(r.svc.state.cursors.fathom.since).toBe('2026-10-09T10:00:00Z');
 		expect(r.app.vault.getFileByPath('Meetings/2026-10-09 Meeting bbbb2.md')).not.toBeNull();
 	});
 

@@ -1,6 +1,6 @@
 {
 	"name": "call-notes-sync",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"private": true,
 	"description": "Unofficial sync of your Fathom meeting summaries and action items into your vault, one note per meeting. Not made by Fathom.",
 	"main": "main.js",

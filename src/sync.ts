@@ -9,6 +9,7 @@ import {
 	addLinkUnderHeading,
 	dailyLine,
 	dailyNotePath,
+	fathomCreated,
 	isReady,
 	meetingKey,
 	nextCursor,
@@ -205,7 +206,8 @@ export class SyncService {
 				if (m === null) out.skippedRows++;
 				else {
 					out.meetings.push(m);
-					out.dates.push(m.date);
+					// The window filters compare created_at. A start time can be earlier and would skip a meeting at the page edge.
+					out.dates.push(fathomCreated(row) || m.date);
 				}
 			}
 			token = r.next;

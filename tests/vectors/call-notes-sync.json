@@ -277,6 +277,29 @@
    "expected": null
   },
   {
+   "name": "fathomCreated reads created_at, not the recording start",
+   "fn": "fathomCreated",
+   "args": [
+    {
+     "recording_id": 1,
+     "recording_start_time": "2026-10-08T09:00:00Z",
+     "created_at": "2026-10-08T09:47:12.120Z"
+    }
+   ],
+   "expected": "2026-10-08T09:47:12Z"
+  },
+  {
+   "name": "fathomCreated is empty for a row without created_at",
+   "fn": "fathomCreated",
+   "args": [
+    {
+     "recording_id": 1,
+     "recording_start_time": "2026-10-08T09:00:00Z"
+    }
+   ],
+   "expected": ""
+  },
+  {
    "name": "isoStamp from ISO with fraction",
    "fn": "isoStamp",
    "args": [

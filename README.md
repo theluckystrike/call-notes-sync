@@ -1,6 +1,6 @@
 # Call Notes Sync
 
-Call Notes Sync copies your Fathom meeting summaries into your vault as one note per meeting. Each note has the title, the date, the participants, the summary, the action items as tasks and a link back to the recording. It syncs again from where it stopped and does not make a note again after you delete it.
+Call Notes Sync copies your Fathom meeting summaries into your vault as one note per meeting. Each note has the title, date, participants, summary, action items as tasks and a link back to the recording. It syncs again from where it stopped and does not make a note again after you delete it.
 
 Unofficial. This plugin is not made by, affiliated with or approved by Fathom. Fathom is a mark of its owner. The plugin only reads your own meetings through the public Fathom API, with an API key that you make yourself in your own Fathom account.
 
@@ -10,7 +10,7 @@ Unofficial. This plugin is not made by, affiliated with or approved by Fathom. F
 
 ### Sync now, from a command or the ribbon
 
-Select the microphone icon in the ribbon, or run "Call Notes Sync: Sync now". The plugin asks Fathom for the meetings since the last sync. A notice says what happened, for example "Fetched 5 meetings: 5 new notes." One run reads up to 20 pages. If there is more, run Sync now again.
+Select the microphone icon in the ribbon, or run "Call Notes Sync: Sync now". The plugin asks Fathom for new meetings. A notice says what happened, for example "Fetched 5 meetings: 5 new notes." One run reads up to 20 pages. If there is more, run Sync now again.
 
 <img src="https://raw.githubusercontent.com/theluckystrike/call-notes-sync/HEAD/docs/sync-now.png" alt="A notice that says Fetched 5 meetings: 5 new notes" width="720">
 
@@ -28,7 +28,7 @@ Fathom sends the summary as Markdown. Its headings move down, so your note keeps
 
 ### Deleted notes stay deleted
 
-If you delete a note, the plugin remembers the meeting and does not make it again. This works while Obsidian is closed too. A later sync never changes a note that exists, so your edits are safe.
+If you delete a note, the plugin remembers the meeting and does not make it again. This works while Obsidian is closed too. A later sync never changes a meeting note that exists, so your edits are safe.
 
 "Forget deleted notes" clears the list. "Start from the beginning" asks for your whole history again.
 
@@ -82,7 +82,7 @@ Fathom is not involved in this plugin and has not approved it. The plugin runs o
 
 ### Does a note update when the summary changes in Fathom?
 
-No. A note is made once. To get a new copy, delete the note, run "Forget deleted notes" and "Start from the beginning", then run "Sync now".
+No. A note is made once. To get a new copy, delete the note, run "Forget deleted notes" and "Start from the beginning", then run "Sync now". Your other deleted notes also come back.
 
 ### I turned on Pro. Why do old notes have no transcript, tags or properties?
 
@@ -90,7 +90,7 @@ Pro features apply to notes that the plugin makes after Pro is on. Use the steps
 
 ### Is there a limit on requests?
 
-Yes. A Fathom key allows 60 requests a minute, and 30 a minute with a summary or a transcript. The plugin waits about two seconds between pages. If Fathom says "slow down", it waits as long as Fathom asks, up to two minutes, and stops after two tries.
+Yes. A Fathom key allows 60 requests a minute, and 30 a minute with a summary or a transcript. The plugin waits about two seconds between pages. If Fathom says "slow down", it waits the seconds that Fathom asks, up to two minutes, and stops after two retries.
 
 ### Does it work with Fathom OAuth?
 

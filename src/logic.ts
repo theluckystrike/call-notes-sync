@@ -158,6 +158,14 @@ export function parseFathom(raw: unknown): Meeting | null {
 	};
 }
 
+/**
+ * The created_at time of a Fathom row, or "" when it has none. The created_after and created_before filters of the list
+ * endpoint compare with this time, not with the start of the recording, so the cursor uses it.
+ */
+export function fathomCreated(raw: unknown): string {
+	return isObj(raw) ? isoStamp(raw.created_at) : '';
+}
+
 /** Dedupe key of a meeting in the sync state and in the front matter. */
 export const meetingKey = (m: { provider: Provider; id: string }): string => `${m.provider}:${m.id}`;
 
@@ -516,11 +524,11 @@ export function passesFilters(m: Meeting, f: Filters, tzMin: number): boolean {
 // ---------------------------------------------------------------- cursor
 
 export interface Cursor {
-	/** Newest meeting time that a finished sync saw. A sync starts a little before it. */
+	/** Newest created time (Fathom created_at) that a finished sync saw. A sync starts a little before it. */
 	since: string | null;
-	/** Set when a run stopped at its limit: the next run asks for meetings before this time. */
+	/** Set when a run stopped at its limit: the next run asks for meetings created before this time. */
 	until: string | null;
-	/** Newest meeting time seen while a limited run is not finished. */
+	/** Newest created time seen while a limited run is not finished. */
 	high: string | null;
 }
 
@@ -536,7 +544,7 @@ export function windowFrom(c: Cursor, overlapMs: number = CURSOR_OVERLAP_MS): st
 }
 
 /**
- * The cursor after one run. dates are the meeting times in the order the service sent them. When the run was not stopped by its
+ * The cursor after one run. dates are the created times of the meetings in the order the service sent them. When the run was not stopped by its
  * limit, the window is complete: since moves to the newest time seen. When it was stopped, a newest-first answer continues
  * before the oldest time seen (until), and an oldest-first answer continues after the newest (since).
  */
@@ -592,6 +600,7 @@ export function dailyLine(notePath: string, m: Meeting, tzMin: number): string {
 
 const run: Record<string, (a: unknown[]) => unknown> = {
 	parseFathom: (a) => parseFathom(a[0]),
+	fathomCreated: (a) => fathomCreated(a[0]),
 	parseClock: (a) => parseClock(a[0]),
 	isoStamp: (a) => isoStamp(a[0]),
 	safeUrl: (a) => safeUrl(a[0]),

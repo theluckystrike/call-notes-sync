@@ -1,5 +1,11 @@
 # call-notes-sync
 
+## 1.1.1
+
+### Patch Changes
+
+- 46a768e: A sync that stops at the page limit now continues from the Fathom created time, so a meeting at the page edge is not skipped, and the README states the retry and forget rules correctly.
+
 ## 1.1.0
 
 ### Minor Changes
