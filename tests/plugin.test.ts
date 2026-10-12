@@ -39,18 +39,19 @@ describe('CallNotesSyncPlugin', () => {
 
 	it('without Pro the Pro settings have no effect', async () => {
 		const plugin = await load();
-		plugin.settings = normalizeSettings({ ...plugin.settings, transcript: true, body: 'X {{title}}', filterFrom: '2026-01-01', filterParticipants: 'zed', dailyOn: true });
+		plugin.settings = normalizeSettings({ ...plugin.settings, transcript: true, body: 'X {{title}}', filterFrom: '2026-01-01', filterParticipants: 'zed', dailyOn: true, tags: 'a', props: 'k: v' });
 		const o = plugin.options();
-		expect(o).toMatchObject({ transcript: false, body: '', daily: null, filters: { from: '', to: '', participants: '' } });
+		expect(o).toMatchObject({ transcript: false, body: '', tags: '', props: '', daily: null, filters: { from: '', to: '', participants: '' } });
 	});
 
 	it('with Pro the Pro settings count', async () => {
 		const plugin = await load();
 		bindPro(fakeManager(true) as never);
-		plugin.settings = normalizeSettings({ ...plugin.settings, transcript: true, body: 'X {{title}}', filterFrom: '2026-01-01', filterParticipants: 'zed', dailyOn: true, dailyFolder: 'Daily' });
+		plugin.settings = normalizeSettings({ ...plugin.settings, transcript: true, body: 'X {{title}}', filterFrom: '2026-01-01', filterParticipants: 'zed', dailyOn: true, dailyFolder: 'Daily', tags: 'a', props: 'k: v' });
 		const o = plugin.options();
 		expect(o.transcript).toBe(true);
 		expect(o.body).toBe('X {{title}}');
+		expect(o).toMatchObject({ tags: 'a', props: 'k: v' });
 		expect(o.filters).toEqual({ from: '2026-01-01', to: '', participants: 'zed' });
 		expect(o.daily).toEqual({ folder: 'Daily', format: 'YYYY-MM-DD', heading: '## Meetings' });
 	});
@@ -82,6 +83,8 @@ describe('CallNotesSyncPlugin', () => {
 		const names = tab.getSettingDefinitions().flatMap((d) => ('items' in d ? d.items.map((i) => (i as { name: string }).name) : [(d as { name?: string }).name ?? '']));
 		for (const want of ['Fathom API key', 'Check Fathom key', 'Folder', 'File name', 'Sync now', 'Forget deleted notes', 'Start from the beginning', 'Status']) expect(names).toContain(want);
 		expect(names.some((n) => n.startsWith('Transcript with speaker labels'))).toBe(true);
+		expect(names).toContain('Tags (Pro)');
+		expect(names).toContain('Extra properties (Pro)');
 	});
 });
 
@@ -96,6 +99,15 @@ describe('settings and Pro facade', () => {
 		expect(s.dailyFormat).toBe('YYYY-MM-DD');
 		expect(s.body).toBe(DEFAULT_SETTINGS.body);
 		expect(normalizeSettings(null)).toEqual(DEFAULT_SETTINGS);
+	});
+
+	it('old saved data without tags and properties gets empty values, and long text is cut', () => {
+		const old = normalizeSettings({ folder: 'Meetings' });
+		expect(old).toMatchObject({ tags: '', props: '' });
+		const long = normalizeSettings({ tags: 'x'.repeat(900), props: 'y'.repeat(9000), body: 5 as never });
+		expect(long.tags).toHaveLength(500);
+		expect(long.props).toHaveLength(5000);
+		expect(normalizeSettings({ tags: 3 as never, props: null as never })).toMatchObject({ tags: '', props: '' });
 	});
 
 	it('the facade follows the manager and tells listeners', () => {

@@ -88,6 +88,10 @@ export interface SyncOptions {
 	transcript: boolean;
 	/** Pro: the body template. Empty: the default body. */
 	body: string;
+	/** Pro: tags for the front matter of each new note. Empty: none. */
+	tags: string;
+	/** Pro: extra front matter lines, one "name: value" for each line. Empty: none. */
+	props: string;
 	/** Pro: date and participant filters. */
 	filters: Filters;
 	/** Pro: link each new note in its daily note. null: off. */
@@ -307,7 +311,7 @@ export class SyncService {
 		const base = renderFileName(normalizeTemplate(opt.template), m, tz);
 		const name = uniqueName(base, (n) => vault.getAbstractFileByPath(normalizePath(`${folder}/${n}.md`)) !== null, shortHash(meetingKey(m)));
 		const path = normalizePath(`${folder}/${name}.md`);
-		await vault.create(path, renderNote(m, { tzMin: tz, transcript: opt.transcript, body: opt.body }));
+		await vault.create(path, renderNote(m, { tzMin: tz, transcript: opt.transcript, body: opt.body, tags: opt.tags, props: opt.props }));
 		this.state.meetings[meetingKey(m)] = { path };
 		return path;
 	}

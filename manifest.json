@@ -1,7 +1,7 @@
 {
 	"id": "call-notes-sync",
 	"name": "Call Notes Sync",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"minAppVersion": "1.13.4",
 	"description": "Unofficial sync of your Fathom meeting summaries and action items into your vault, one note per meeting. Not made by Fathom.",
 	"author": "Michael Lip",

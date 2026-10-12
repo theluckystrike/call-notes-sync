@@ -41,11 +41,18 @@
 	},
 	{
 		"feature": "pro-settings",
-		"caption": "Pro settings: the transcript switch, the note template, date and participant filters and the daily note link.",
+		"caption": "Pro settings: the transcript switch, the note template, tags, extra properties, date and participant filters and the daily note link.",
 		"eval": "(async () => { const p = app.plugins.plugins['call-notes-sync']; document.querySelectorAll('.modal-container .modal-close-button').forEach((b) => b.click()); try { app.setting.close(); } catch (e) {} if (!window.__csStub) { const src = await app.vault.adapter.read('Call Notes Sync/stub-calls.js'); new Function('app', 'return ' + src)(app); } const st = window.__csStub; const pause = (ms) => new Promise((r) => setTimeout(r, ms)); const lastOnly = () => { const ns = document.querySelectorAll('.notice-container .notice'); ns.forEach((n, i) => { if (i < ns.length - 1) n.remove(); }); }; const FF = 'Meetings/2026-10-05 Weekly product sync.md', FA = 'Meetings/2026-10-08 Quarterly planning.md'; const ensure = async () => { if (!app.vault.getFileByPath(FF) || !app.vault.getFileByPath(FA)) { await st.reset(); await p.syncNow(); await pause(500); } }; const open = async (path) => { await app.workspace.getLeaf(false).openFile(app.vault.getFileByPath(path), { state: { mode: 'preview' } }); await pause(700); }; st.setPro(true); app.setting.open(); app.setting.openTabById('call-notes-sync'); await pause(900); const hs = Array.from(app.setting.activeTab.containerEl.querySelectorAll('.setting-group-heading, .setting-item-heading, h2, h3')); const h = hs.find((e) => (e.textContent || '').indexOf('Pro features') === 0); if (h) h.scrollIntoView(); await pause(500); return 'ok'; })()",
 		"after": "app.setting.close(); window.__csStub.setPro(false); 'ok'",
 		"wait": 800,
-		"zoom": 0.75
+		"zoom": 0.6
+	},
+	{
+		"feature": "pro-properties",
+		"caption": "Pro: a new note with tags, a type, a list of attendee links and a reviewed switch in its properties.",
+		"eval": "(async () => { const p = app.plugins.plugins['call-notes-sync']; document.querySelectorAll('.modal-container .modal-close-button').forEach((b) => b.click()); try { app.setting.close(); } catch (e) {} if (!window.__csStub) { const src = await app.vault.adapter.read('Call Notes Sync/stub-calls.js'); new Function('app', 'return ' + src)(app); } const st = window.__csStub; const pause = (ms) => new Promise((r) => setTimeout(r, ms)); const lastOnly = () => { const ns = document.querySelectorAll('.notice-container .notice'); ns.forEach((n, i) => { if (i < ns.length - 1) n.remove(); }); }; const FF = 'Meetings/2026-10-05 Weekly product sync.md', FA = 'Meetings/2026-10-08 Quarterly planning.md'; const ensure = async () => { if (!app.vault.getFileByPath(FF) || !app.vault.getFileByPath(FA)) { await st.reset(); await p.syncNow(); await pause(500); } }; const open = async (path) => { await app.workspace.getLeaf(false).openFile(app.vault.getFileByPath(path), { state: { mode: 'preview' } }); await pause(700); }; await st.reset(); st.setPro(true); p.settings.tags = 'meeting, calls/fathom'; p.settings.props = 'type: call\\nattendees: {{participant_links}}\\nreviewed: false'; await p.syncNow(); await pause(700); lastOnly(); await open(FF); return 'ok'; })()",
+		"after": "(() => { const p = app.plugins.plugins['call-notes-sync']; p.settings.tags = ''; p.settings.props = ''; window.__csStub.setPro(false); return 'ok'; })()",
+		"wait": 600
 	},
 	{
 		"feature": "call-notes-sync",

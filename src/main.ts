@@ -74,6 +74,8 @@ export default class CallNotesSyncPlugin extends Plugin {
 			template: s.template,
 			transcript: pro && s.transcript,
 			body: pro ? s.body : '',
+			tags: pro ? s.tags : '',
+			props: pro ? s.props : '',
 			filters: pro ? { from: s.filterFrom, to: s.filterTo, participants: s.filterParticipants } : NO_FILTERS,
 			daily: pro && s.dailyOn ? { folder: s.dailyFolder, format: s.dailyFormat, heading: s.dailyHeading } : null,
 		};

@@ -15,7 +15,7 @@ export const SPONSORS: SponsorsConfig = {
 };
 
 export const PRO_UI = {
-	proSummary: 'Pro adds the full transcript with speaker labels, a note template, a link in the daily note, and filters by date and participant.',
+	proSummary: 'Pro adds the full transcript with speaker labels, a note template, tags and extra properties with links to attendees, a link in the daily note, and filters by date and participant.',
 	priceText: 'Sponsor $5 a month, or $15 once. When you have paid $15 in total, Pro stays on.',
 };
 

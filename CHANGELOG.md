@@ -1,5 +1,11 @@
 # call-notes-sync
 
+## 1.1.0
+
+### Minor Changes
+
+- a6c393e: Add Pro tags and extra note properties, with wiki links to the attendees, in the front matter of each new note.
+
 ## 1.0.2
 
 ### Patch Changes

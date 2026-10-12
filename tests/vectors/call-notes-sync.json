@@ -2287,6 +2287,972 @@
      }
     ]
    }
+  },
+  {
+   "name": "tags: commas, spaces and a hash",
+   "fn": "parseTags",
+   "args": [
+    "meeting, #Calls  fathom"
+   ],
+   "expected": [
+    "meeting",
+    "Calls",
+    "fathom"
+   ]
+  },
+  {
+   "name": "tags: the same tag twice in other case is kept once",
+   "fn": "parseTags",
+   "args": [
+    "Calls calls, CALLS"
+   ],
+   "expected": [
+    "Calls"
+   ]
+  },
+  {
+   "name": "tags: digits only, bad characters and slashes at the ends",
+   "fn": "parseTags",
+   "args": [
+    "2026, q1 review, a/b/, ##x!y"
+   ],
+   "expected": [
+    "q1",
+    "review",
+    "a/b",
+    "xy"
+   ]
+  },
+  {
+   "name": "tags: empty text gives none",
+   "fn": "parseTags",
+   "args": [
+    " ,; \n "
+   ],
+   "expected": []
+  },
+  {
+   "name": "tags: a nested tag and a letter from another script",
+   "fn": "parseTags",
+   "args": [
+    "work/été, 会议"
+   ],
+   "expected": [
+    "work/été",
+    "会议"
+   ]
+  },
+  {
+   "name": "person link: a name",
+   "fn": "personLink",
+   "args": [
+    {
+     "name": "Alice Johnson",
+     "email": "a@x.com"
+    }
+   ],
+   "expected": "[[Alice Johnson]]"
+  },
+  {
+   "name": "person link: an email when there is no name",
+   "fn": "personLink",
+   "args": [
+    {
+     "name": "",
+     "email": "bob@acme.com"
+    }
+   ],
+   "expected": "[[bob@acme.com]]"
+  },
+  {
+   "name": "person link: characters that break a link are removed",
+   "fn": "personLink",
+   "args": [
+    {
+     "name": "A#B|C",
+     "email": ""
+    }
+   ],
+   "expected": "[[A B - C]]"
+  },
+  {
+   "name": "properties: tags only",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "tags": "meeting, calls"
+    }
+   ],
+   "expected": [
+    "tags:",
+    "  - \"meeting\"",
+    "  - \"calls\""
+   ]
+  },
+  {
+   "name": "properties: none when tags and lines are empty",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "tags": "",
+     "props": ""
+    }
+   ],
+   "expected": []
+  },
+  {
+   "name": "properties: participant links make a list of wiki links",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "attendees: {{participant_links}}"
+    }
+   ],
+   "expected": [
+    "attendees:",
+    "  - \"[[Alice Johnson]]\"",
+    "  - \"[[bob@acme.com]]\""
+   ]
+  },
+  {
+   "name": "properties: participants make a list of names",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "who: {{participants}}"
+    }
+   ],
+   "expected": [
+    "who:",
+    "  - \"Alice Johnson\"",
+    "  - \"bob@acme.com\""
+   ]
+  },
+  {
+   "name": "properties: a list with nobody is an empty list",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "attendees: {{participants}}"
+    }
+   ],
+   "expected": [
+    "attendees: []"
+   ]
+  },
+  {
+   "name": "properties: the date token alone is a date",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "day: {{date}}"
+    }
+   ],
+   "expected": [
+    "day: 2026-03-01"
+   ]
+  },
+  {
+   "name": "properties: the date token follows the time zone",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 480,
+     "props": "day: {{date}}"
+    }
+   ],
+   "expected": [
+    "day: 2026-03-02"
+   ]
+  },
+  {
+   "name": "properties: the duration token alone is a number",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "minutes: {{duration}}"
+    }
+   ],
+   "expected": [
+    "minutes: 60"
+   ]
+  },
+  {
+   "name": "properties: no length gives an empty property",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": null,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "minutes: {{duration}}"
+    }
+   ],
+   "expected": [
+    "minutes:"
+   ]
+  },
+  {
+   "name": "properties: plain text that is a boolean, number or date is not quoted",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "reviewed: false\nrating: 5\ndue: 2026-12-31"
+    }
+   ],
+   "expected": [
+    "reviewed: false",
+    "rating: 5",
+    "due: 2026-12-31"
+   ]
+  },
+  {
+   "name": "properties: a number or date that YAML would change stays quoted text",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "version: 1.10\ncode: 007\nzero: -0\nday: 2026-02-30\nprice: 2.5\nless: -3\nmonth: 2026-13-01"
+    }
+   ],
+   "expected": [
+    "version: \"1.10\"",
+    "code: \"007\"",
+    "zero: \"-0\"",
+    "day: \"2026-02-30\"",
+    "price: 2.5",
+    "less: -3",
+    "month: \"2026-13-01\""
+   ]
+  },
+  {
+   "name": "properties: plain text is quoted, so yes is not a boolean",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "type: call\nstatus: yes"
+    }
+   ],
+   "expected": [
+    "type: \"call\"",
+    "status: \"yes\""
+   ]
+  },
+  {
+   "name": "properties: tokens inside text are quoted",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "summary: {{title}} on {{date}} at {{time}}"
+    }
+   ],
+   "expected": [
+    "summary: \"Quarterly Business Review on 2026-03-01 at 16:01\""
+   ]
+  },
+  {
+   "name": "properties: a title that looks like a date stays text",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "2026-03-01",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "src: {{title}}"
+    }
+   ],
+   "expected": [
+    "src: \"2026-03-01\""
+   ]
+  },
+  {
+   "name": "properties: an empty value is an empty property",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "notes:"
+    }
+   ],
+   "expected": [
+    "notes:"
+   ]
+  },
+  {
+   "name": "properties: the link, source and id tokens",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "link2: {{link}}\nfrom: {{source}}\nrid: {{id}}"
+    }
+   ],
+   "expected": [
+    "link2: \"https://fathom.video/xyz123\"",
+    "from: \"Fathom\"",
+    "rid: \"123456789\""
+   ]
+  },
+  {
+   "name": "properties: a built in name is left out and tags has its own setting",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "title: X\nmeeting_id: 1\nDate: x\ntags: a\nParticipants: x\nkeep: 1"
+    }
+   ],
+   "expected": [
+    "keep: 1"
+   ]
+  },
+  {
+   "name": "properties: a bad name, a word that YAML reads as a value and a line without colon are left out",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "1bad: x\nbad.name: x\nyes: x\nNull: x\nno colon line\nok name: x"
+    }
+   ],
+   "expected": [
+    "ok name: \"x\""
+   ]
+  },
+  {
+   "name": "properties: the same name twice keeps the first",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "a: 1\nA: 2"
+    }
+   ],
+   "expected": [
+    "a: 1"
+   ]
+  },
+  {
+   "name": "properties: quotes and a colon in the value stay safe",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "note: say \"hi\": {{title}}"
+    }
+   ],
+   "expected": [
+    "note: \"say \\\"hi\\\": Quarterly Business Review\""
+   ]
+  },
+  {
+   "name": "properties: an unknown token is empty",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "x: a{{nope}}b"
+    }
+   ],
+   "expected": [
+    "x: \"ab\""
+   ]
+  },
+  {
+   "name": "properties: Windows line ends",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "a: 1\r\nb: x\r\n"
+    }
+   ],
+   "expected": [
+    "a: 1",
+    "b: \"x\""
+   ]
+  },
+  {
+   "name": "properties: tags come before the lines",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Quarterly Business Review",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "tags": "t1",
+     "props": "a: 1"
+    }
+   ],
+   "expected": [
+    "tags:",
+    "  - \"t1\"",
+    "a: 1"
+   ]
+  },
+  {
+   "name": "properties: a title with a line break and a quote is one line",
+   "fn": "extraProperties",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "123456789",
+     "title": "Say \"hi\"\nnow",
+     "date": "2026-03-01T16:01:12Z",
+     "durationMin": 60,
+     "participants": [
+      {
+       "name": "Alice Johnson",
+       "email": "alice.johnson@acme.com"
+      },
+      {
+       "name": "",
+       "email": "bob@acme.com"
+      }
+     ],
+     "summary": "",
+     "actionItems": [],
+     "url": "https://fathom.video/xyz123",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "props": "t: {{title}}"
+    }
+   ],
+   "expected": [
+    "t: \"Say \\\"hi\\\" now\""
+   ]
+  },
+  {
+   "name": "note: Pro tags and properties go after the built in properties",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "transcript": false,
+     "body": "",
+     "tags": "meeting",
+     "props": "type: call\nattendees: {{participant_links}}"
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"abcd\"\ntitle: \"A\"\ndate: 2026-10-09T09:00:00Z\nparticipants: []\ntags:\n  - \"meeting\"\ntype: \"call\"\nattendees: []\n---\n\n# A\n\n**When:** 2026-10-09 09:00  \n**Source:** Fathom\n\n## Summary\n\n_No summary was available when this note was made._\n\n## Action items\n\n_No action items._\n"
+  },
+  {
+   "name": "note: without tags and properties the front matter is the same as before",
+   "fn": "renderNote",
+   "args": [
+    {
+     "provider": "fathom",
+     "id": "abcd",
+     "title": "A",
+     "date": "2026-10-09T09:00:00Z",
+     "durationMin": null,
+     "participants": [],
+     "summary": "",
+     "actionItems": [],
+     "url": "",
+     "transcript": null
+    },
+    {
+     "tzMin": 0,
+     "transcript": false,
+     "body": "",
+     "tags": "",
+     "props": ""
+    }
+   ],
+   "expected": "---\nmeeting_source: fathom\nmeeting_id: \"abcd\"\ntitle: \"A\"\ndate: 2026-10-09T09:00:00Z\nparticipants: []\n---\n\n# A\n\n**When:** 2026-10-09 09:00  \n**Source:** Fathom\n\n## Summary\n\n_No summary was available when this note was made._\n\n## Action items\n\n_No action items._\n"
   }
  ]
 }

@@ -36,7 +36,7 @@ interface Rig {
 	opts: SyncOptions;
 }
 
-const OPTS: SyncOptions = { providers: ['fathom'], folder: 'Meetings', template: '{date} {title}', transcript: false, body: '', filters: NO_FILTERS, daily: null };
+const OPTS: SyncOptions = { providers: ['fathom'], folder: 'Meetings', template: '{date} {title}', transcript: false, body: '', tags: '', props: '', filters: NO_FILTERS, daily: null };
 
 /** A sync service over an in-memory vault and a scripted Fathom. Rows are served by window and page like the real API: newest first, a cursor. */
 function rig(rows: Record<string, unknown>[] = []): Rig {
@@ -83,6 +83,50 @@ describe('sync with Fathom', () => {
 		expect(text).toContain('duration_minutes: 45');
 		expect(text).toContain('[Open in Fathom](https://fathom.video/calls/aaaa1)');
 		expect(Object.keys(r.svc.state.meetings).sort()).toEqual(['fathom:aaaa1', 'fathom:bbbb2']);
+	});
+
+	it('adds Pro tags and extra properties after the built in properties of a new note', async () => {
+		const r = rig([row('aaaa1', 8)]);
+		r.opts.tags = '#meeting, calls/fathom';
+		r.opts.props = 'type: call\nattendees: {{participant_links}}\nreviewed: false\nmeeting_id: 7';
+		await r.svc.run();
+		const text = await read(r, 'Meetings/2026-10-08 Meeting aaaa1.md');
+		const fm = text.slice(0, text.indexOf('\n---\n', 4) + 5);
+		expect(fm).toBe(
+			'---\nmeeting_source: fathom\nmeeting_id: "aaaa1"\ntitle: "Meeting aaaa1"\ndate: 2026-10-08T09:00:00Z\nduration_minutes: 45\nparticipants:\n  - "Ann Lee"\nurl: "https://fathom.video/calls/aaaa1"\n' +
+				'tags:\n  - "meeting"\n  - "calls/fathom"\ntype: "call"\nattendees:\n  - "[[Ann Lee]]"\nreviewed: false\n---\n',
+		);
+	});
+
+	it('writes no tags and no extra properties when the options are empty', async () => {
+		const r = rig([row('aaaa1', 8)]);
+		await r.svc.run();
+		const text = await read(r, 'Meetings/2026-10-08 Meeting aaaa1.md');
+		expect(text).not.toContain('tags:');
+		expect(text.split('\n---\n')[0]).toBe(
+			'---\nmeeting_source: fathom\nmeeting_id: "aaaa1"\ntitle: "Meeting aaaa1"\ndate: 2026-10-08T09:00:00Z\nduration_minutes: 45\nparticipants:\n  - "Ann Lee"\nurl: "https://fathom.video/calls/aaaa1"',
+		);
+	});
+
+	it('keeps at most 20 tags and 20 extra properties', async () => {
+		const r = rig([row('aaaa1', 8)]);
+		r.opts.tags = Array.from({ length: 30 }, (_v, i) => `t${i}x`).join(' ');
+		r.opts.props = Array.from({ length: 30 }, (_v, i) => `p${i}x: ${i}`).join('\n');
+		await r.svc.run();
+		const text = await read(r, 'Meetings/2026-10-08 Meeting aaaa1.md');
+		expect(text.match(/^ {2}- "t\d+x"$/gm)).toHaveLength(20);
+		expect(text.match(/^p\d+x: \d+$/gm)).toHaveLength(20);
+	});
+
+	it('does not change a note again when you change the tags later', async () => {
+		const r = rig([row('aaaa1', 8)]);
+		await r.svc.run();
+		const before = await read(r, 'Meetings/2026-10-08 Meeting aaaa1.md');
+		r.opts.tags = 'late';
+		r.opts.props = 'x: 1';
+		const res = await r.svc.run();
+		expect(res).toMatchObject({ created: 0, existing: 1 });
+		expect(await read(r, 'Meetings/2026-10-08 Meeting aaaa1.md')).toBe(before);
 	});
 
 	it('writes a completed task as done', async () => {

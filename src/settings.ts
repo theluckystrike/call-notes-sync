@@ -24,6 +24,8 @@ export interface CallNotesSyncSettings {
 	// Pro settings. They have no effect while Pro is off.
 	transcript: boolean;
 	body: string;
+	tags: string;
+	props: string;
 	filterFrom: string;
 	filterTo: string;
 	filterParticipants: string;
@@ -41,6 +43,8 @@ export const DEFAULT_SETTINGS: CallNotesSyncSettings = {
 	template: DEFAULT_TEMPLATE,
 	transcript: true,
 	body: DEFAULT_BODY,
+	tags: '',
+	props: '',
 	filterFrom: '',
 	filterTo: '',
 	filterParticipants: '',
@@ -64,6 +68,8 @@ export function normalizeSettings(saved: Partial<CallNotesSyncSettings> | null |
 		template: typeof s.template === 'string' ? normalizeTemplate(s.template) : DEFAULT_TEMPLATE,
 		transcript: typeof s.transcript === 'boolean' ? s.transcript : true,
 		body: text(s.body, DEFAULT_BODY, 20_000),
+		tags: text(s.tags, '', 500),
+		props: text(s.props, '', 5_000),
 		filterFrom: typeof s.filterFrom === 'string' ? normalizeDay(s.filterFrom) : '',
 		filterTo: typeof s.filterTo === 'string' ? normalizeDay(s.filterTo) : '',
 		filterParticipants: text(s.filterParticipants, '', 500),
@@ -119,6 +125,12 @@ export class CallNotesSyncSettingTab extends PluginSettingTab {
 					name: `Note template${tag}`,
 					desc: 'The body of each new note. Tokens: {{header}}, {{summary}}, {{actions}}, {{transcript}}, {{title}}, {{date}}, {{time}}, {{duration}}, {{participants}}, {{link}}, {{source}}, {{id}}. Notes that exist do not change.',
 					control: { type: 'textarea', key: 'body', defaultValue: DEFAULT_BODY },
+				},
+				{ name: `Tags${tag}`, desc: 'Tags for the properties of each new note. Separate them with commas or spaces. A "#" is optional. Empty: no tags.', control: { type: 'text', key: 'tags', defaultValue: '', placeholder: 'meeting, calls/fathom' } },
+				{
+					name: `Extra properties${tag}`,
+					desc: 'One "name: value" for each line, added to the properties of each new note. Tokens: {{title}}, {{date}}, {{time}}, {{duration}}, {{participants}}, {{participant_links}}, {{link}}, {{source}}, {{id}}. {{participants}} or {{participant_links}} alone as the value makes a list. {{participant_links}} gives [[wiki links]] to person notes. A line with a built in name is left out.',
+					control: { type: 'textarea', key: 'props', defaultValue: '', placeholder: 'type: call\nattendees: {{participant_links}}\nreviewed: false', rows: 4 },
 				},
 				{ name: `Only meetings from${tag}`, desc: 'Date as YYYY-MM-DD. Meetings before it are left out. Empty: no limit.', control: { type: 'text', key: 'filterFrom', defaultValue: '', placeholder: '2026-01-01', validate: (v: string) => (v.trim() === '' || normalizeDay(v) !== '' ? undefined : 'Use YYYY-MM-DD.') } },
 				{ name: `Only meetings until${tag}`, desc: 'Date as YYYY-MM-DD. Meetings after it are left out. Empty: no limit.', control: { type: 'text', key: 'filterTo', defaultValue: '', placeholder: '2026-12-31', validate: (v: string) => (v.trim() === '' || normalizeDay(v) !== '' ? undefined : 'Use YYYY-MM-DD.') } },

@@ -277,14 +277,14 @@ export function normalizeTemplate(raw: string): string {
 
 const q = (s: string): string => JSON.stringify(oneLine(s));
 
-/** Front matter of a note. The key line is what dedupe uses when the sync state is lost. */
-export function renderFrontmatter(m: Meeting): string {
+/** Front matter of a note. The key line is what dedupe uses when the sync state is lost. Extra lines (Pro) go after the built in ones. */
+export function renderFrontmatter(m: Meeting, extra: string[] = []): string {
 	const people = m.participants.map(personLabel);
 	const lines = ['---', `meeting_source: ${m.provider}`, `meeting_id: ${q(m.id)}`, `title: ${q(m.title)}`, `date: ${m.date}`];
 	if (m.durationMin !== null) lines.push(`duration_minutes: ${m.durationMin}`);
 	lines.push(...(people.length === 0 ? ['participants: []'] : ['participants:', ...people.map((p) => `  - ${q(p)}`)]));
 	if (m.url !== '') lines.push(`url: ${q(m.url)}`);
-	lines.push('---', '');
+	lines.push(...extra, '---', '');
 	return lines.join('\n');
 }
 
@@ -360,6 +360,10 @@ export interface RenderOptions {
 	transcript: boolean;
 	/** Pro: the body template. Empty or free: DEFAULT_BODY. */
 	body: string;
+	/** Pro: tags for the front matter, separated by commas, spaces or lines. Empty: none. */
+	tags?: string;
+	/** Pro: extra front matter lines, one "name: value" for each line. Empty: none. */
+	props?: string;
 }
 
 /** The tokens of a body template: {{header}}, {{summary}}, {{actions}}, {{transcript}}, {{title}}, {{date}}, {{time}}, {{duration}}, {{participants}}, {{link}}, {{source}}, {{id}}. */
@@ -387,7 +391,91 @@ export function renderBody(m: Meeting, o: RenderOptions): string {
 
 /** Text of a new note: front matter, a title line and the body. */
 export function renderNote(m: Meeting, o: RenderOptions): string {
-	return `${renderFrontmatter(m)}\n# ${oneLine(m.title)}\n\n${renderBody(m, o)}`;
+	return `${renderFrontmatter(m, extraProperties(m, o))}\n# ${oneLine(m.title)}\n\n${renderBody(m, o)}`;
+}
+
+// ---------------------------------------------------------------- note properties (Pro)
+
+export const MAX_PROPS = 20;
+export const MAX_TAGS = 20;
+/** Names of the built in properties. An extra line cannot use them, so a note keeps one key of each. "tags" has its own setting. */
+const BUILT_IN_PROPS = ['meeting_source', 'meeting_id', 'title', 'date', 'duration_minutes', 'participants', 'url', 'tags'];
+/** A bare YAML key with one of these names would read as a value that is not text. */
+const YAML_WORDS = /^(?:true|false|yes|no|on|off|null|y|n)$/i;
+const PROP_NAME = /^[A-Za-z][A-Za-z0-9_ -]{0,39}$/;
+
+/** True when YAML reads the text back as the same boolean, number or date. "1.10", "007" and "2026-02-30" are not, so they stay quoted text. */
+function isPlainLiteral(v: string): boolean {
+	if (v === 'true' || v === 'false') return true;
+	if (/^-?\d+(?:\.\d+)?$/.test(v)) return String(Number(v)) === v;
+	const t = /^\d{4}-\d{2}-\d{2}$/.test(v) ? Date.parse(`${v}T00:00:00Z`) : NaN;
+	return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === v;
+}
+
+/** Tags from a list that you type, as valid Obsidian tags without "#", in order, without duplicates. A tag of digits only is dropped. */
+export function parseTags(raw: string): string[] {
+	const out: string[] = [];
+	for (const part of raw.split(/[,;\n]+|\s+/)) {
+		const t = part.trim().replace(/^#+/, '').replace(/[^\p{L}\p{N}_/-]/gu, '').replace(/^\/+|\/+$/g, '');
+		if (t === '' || /^\d+$/.test(t) || out.some((o) => o.toLowerCase() === t.toLowerCase())) continue;
+		out.push(t);
+		if (out.length === MAX_TAGS) break;
+	}
+	return out;
+}
+
+/** The wiki link of a person: the file name that a person note would have. */
+export const personLink = (p: Person): string => `[[${sanitizeFileName(personLabel(p))}]]`;
+
+/**
+ * Front matter lines for the Pro tags and extra properties of one meeting. Each extra line is "name: value".
+ * The value may hold the tokens {{title}}, {{date}}, {{time}}, {{duration}}, {{participants}}, {{participant_links}}, {{link}}, {{source}} and {{id}}.
+ * {{participants}} or {{participant_links}} alone as the value makes a list. {{date}} alone is a date and {{duration}} alone is a
+ * number. A value of plain text with no token that is true, false, a number or a date is not quoted. Every other value is quoted text.
+ * A line with a bad or a built in name is skipped, and so is the second line with one name.
+ */
+export function extraProperties(m: Meeting, o: { tzMin: number; tags?: string; props?: string }): string[] {
+	const lines: string[] = [];
+	const tags = parseTags(o.tags ?? '');
+	if (tags.length > 0) lines.push('tags:', ...tags.map((t) => `  - ${JSON.stringify(t)}`));
+	const names: string[] = [];
+	const list = (items: string[]): string[] => (items.length === 0 ? [] : items.map((i) => `  - ${q(i)}`));
+	for (const raw of (o.props ?? '').split('\n').slice(0, 200)) {
+		if (names.length === MAX_PROPS) break;
+		const cut = raw.indexOf(':');
+		if (cut < 0) continue;
+		const name = raw.slice(0, cut).trim();
+		const tpl = raw.slice(cut + 1).trim().slice(0, 300);
+		const lower = name.toLowerCase();
+		if (!PROP_NAME.test(name) || YAML_WORDS.test(name) || BUILT_IN_PROPS.includes(lower) || names.includes(lower)) continue;
+		names.push(lower);
+		const when = localDate(m.date, o.tzMin);
+		const people = m.participants.map(personLabel);
+		if (tpl === '{{participants}}' || tpl === '{{participant_links}}') {
+			const items = tpl === '{{participants}}' ? people : m.participants.map(personLink);
+			lines.push(...(items.length === 0 ? [`${name}: []`] : [`${name}:`, ...list(items)]));
+			continue;
+		}
+		if (tpl === '') lines.push(`${name}:`);
+		else if (tpl === '{{date}}') lines.push(when === '' ? `${name}:` : `${name}: ${when}`);
+		else if (tpl === '{{duration}}') lines.push(m.durationMin === null ? `${name}:` : `${name}: ${m.durationMin}`);
+		else if (!tpl.includes('{{') && isPlainLiteral(tpl)) lines.push(`${name}: ${tpl}`);
+		else {
+			const t: Record<string, string> = {
+				title: m.title,
+				date: when,
+				time: localTime(m.date, o.tzMin),
+				duration: m.durationMin === null ? '' : String(m.durationMin),
+				participants: people.join(', '),
+				participant_links: m.participants.map(personLink).join(', '),
+				link: m.url,
+				source: PROVIDER_LABEL[m.provider],
+				id: m.id,
+			};
+			lines.push(`${name}: ${q(tpl.replace(/\{\{([a-z_]+)\}\}/g, (_x, k: string) => t[k] ?? ''))}`);
+		}
+	}
+	return lines;
 }
 
 // ---------------------------------------------------------------- filters (Pro)
@@ -523,6 +611,9 @@ const run: Record<string, (a: unknown[]) => unknown> = {
 	normalizeFolder: (a) => normalizeFolder(a[0] as string),
 	normalizeTemplate: (a) => normalizeTemplate(a[0] as string),
 	renderFrontmatter: (a) => renderFrontmatter(a[0] as Meeting),
+	parseTags: (a) => parseTags(a[0] as string),
+	personLink: (a) => personLink(a[0] as Person),
+	extraProperties: (a) => extraProperties(a[0] as Meeting, a[1] as { tzMin: number; tags?: string; props?: string }),
 	demoteHeadings: (a) => demoteHeadings(a[0] as string),
 	renderActions: (a) => renderActions(a[0] as ActionItem[]),
 	renderTranscript: (a) => renderTranscript(a[0] as TranscriptLine[]),
