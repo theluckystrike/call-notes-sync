@@ -1,5 +1,17 @@
 # call-notes-sync
 
+## 1.1.3
+
+### Patch Changes
+
+- 928a3e2: Use a fixed clock and UTC in the app tests. Check the 48 hour sync window from the Fathom created time and test a meeting that is not ready yet.
+
+## 1.1.2
+
+### Patch Changes
+
+- 85e6f8b: Treat a GitHub sponsorship reply without an amount as a failed check, not a refusal, and stop the GitHub sign in when the settings close or the plugin unloads.
+
 ## 1.1.1
 
 ### Patch Changes

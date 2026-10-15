@@ -8,6 +8,7 @@ const STUB = readFileSync('docs/sample-notes/stub-calls.js', 'utf8');
 const FOLDER = 'Meetings';
 const NOTE_A = `${FOLDER}/2026-10-05 Weekly product sync.md`;
 const NOTE_B = `${FOLDER}/2026-10-08 Quarterly planning.md`;
+const TEST_NOW = Date.parse('2026-10-11T00:00:00Z');
 
 interface Call {
 	provider: string;
@@ -17,6 +18,8 @@ interface Call {
 
 async function installStub(): Promise<void> {
 	await browser.executeObsidian(({ app }, src) => new Function('app', `return ${src}`)(app) as string, STUB);
+	// Set only the sync clock. App timers and the license clock keep running.
+	await inApp(`(() => { st.now = ${TEST_NOW}; p.service.deps.now = () => st.now; p.service.deps.tz = () => 0; })()`);
 }
 
 /** Runs js in the app with the plugin as p and the stub as st. Returns the JSON-safe result. */
@@ -76,12 +79,14 @@ describe(`${pluginId} in the real app`, function () {
 		expect(calls[0]?.payload).not.toContain('include_transcript');
 	});
 
-	it('second sync asks from 48 hours before the newest meeting and changes no file', async function () {
+	it('second sync asks from 48 hours before the newest created time and changes no file', async function () {
 		const before = await inApp<number>(`app.vault.getFileByPath(${JSON.stringify(NOTE_A)}).stat.mtime`);
 		await syncNow();
-		expect(await lastNotice()).toContain('Fetched 3 meetings: 0 new notes, 3 already in the vault.');
+		// created_after excludes the meeting at the exact time limit.
+		expect(await lastNotice()).toContain('Fetched 2 meetings: 0 new notes, 2 already in the vault.');
 		const calls = await inApp<Call[]>('st.calls');
-		expect(calls[1]?.payload).toContain('created_after=2026-10-07T12%3A01%3A00Z');
+		expect(calls[1]?.payload).toContain('created_after=2026-10-07T13%3A00%3A00Z');
+		expect(await inApp<string>('p.service.state.cursors.fathom.since')).toBe('2026-10-09T13:00:00Z');
 		expect(await inApp<number>(`app.vault.getFileByPath(${JSON.stringify(NOTE_A)}).stat.mtime`)).toBe(before);
 		expect(await noteCount()).toBe(5);
 	});
@@ -138,7 +143,7 @@ describe(`${pluginId} in the real app`, function () {
 		expect(a).toContain('## Transcript\n\n**Maria Lopez** (0:03): Let us start with the import screen.');
 		expect(a).toContain('**Sam Okoye** (0:15): The date bug is the last blocker. I can fix it today.');
 		const at = new Date('2026-10-05T12:01:00Z');
-		const hhmm = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+		const hhmm = `${String(at.getUTCHours()).padStart(2, '0')}:${String(at.getUTCMinutes()).padStart(2, '0')}`;
 		expect(await readNote('Daily/2026-10-05.md')).toContain(`## Meetings\n\n- ${hhmm} [[2026-10-05 Weekly product sync]]`);
 		const calls = await inApp<Call[]>('st.calls');
 		expect(calls).toHaveLength(1);
@@ -151,5 +156,21 @@ describe(`${pluginId} in the real app`, function () {
 		expect(await lastNotice()).toContain('Fetched 5 meetings: 5 new notes.');
 		expect(await readNote(NOTE_A)).not.toContain('## Transcript');
 		await inApp(`(async () => { await st.reset(); p.settings.filterParticipants = ''; p.settings.dailyOn = false; return 'ok'; })()`);
+	});
+
+	it('waits for a recent empty meeting and writes it after 48 hours', async function () {
+		try {
+			await inApp(`(async () => { await st.reset(); const row = JSON.parse(JSON.stringify(st.fa[0])); row.default_summary = null; row.action_items = []; st.fa = [row]; st.now = Date.parse(row.recording_start_time) + 60 * 60 * 1000; })()`);
+			await syncNow();
+			expect(await noteCount()).toBe(0);
+			expect(await lastNotice()).toContain('1 not ready yet');
+			await inApp('(() => { st.now += 48 * 60 * 60 * 1000; })()');
+			await syncNow();
+			expect(await noteCount()).toBe(1);
+			expect(await readNote(NOTE_A)).not.toBeNull();
+			expect(await lastNotice()).toContain('Fetched 1 meeting: 1 new note.');
+		} finally {
+			await inApp(`(async () => { await st.reset(); st.now = ${TEST_NOW}; })()`);
+		}
 	});
 });
