@@ -1,0 +1,34 @@
+{
+	"id": "call-notes-sync",
+	"name": "Call Notes Sync",
+	"version": "1.2.0",
+	"changes": [
+		"New Send feedback command. It opens a page where you can report a problem or suggest an idea.",
+		"A sync that stops at the page limit now continues from the Fathom created time.",
+		"Adds Pro tags and extra note properties."
+	],
+	"changes_user": [
+		"New Send feedback command. It opens a page where you can report a problem or suggest an idea.",
+		"When a sync stops at the page limit, the next sync no longer skips the meeting at the page edge.",
+		"Pro can add tags, extra properties and links to the attendees to each new meeting note."
+	],
+	"tip": "A meeting younger than 48 hours with no summary and no action items is not ready yet. A later Sync now takes it.",
+	"thanks": "Hi, I am Michael, a solo developer in Poland. Call Notes Sync is one of over 100 small plugins that I make. Thank you for using it to bring your meetings into Obsidian.",
+	"related": [
+		{
+			"id": "bases-task-rows",
+			"name": "Bases Task Rows",
+			"blurb": "See each task from the notes in a base as a separate row."
+		},
+		{
+			"id": "bases-date-backlinks",
+			"name": "Date Property Backlinks",
+			"blurb": "See the notes whose date property matches a daily note, in a Bases view built for you."
+		},
+		{
+			"id": "task-date-links",
+			"name": "Task Date Links",
+			"blurb": "Adds a real daily note link to a task when you complete it, so backlinks show what you finished each day."
+		}
+	]
+}

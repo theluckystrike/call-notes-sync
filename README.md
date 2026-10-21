@@ -1,6 +1,6 @@
 # Call Notes Sync
 
-Call Notes Sync copies your Fathom meeting summaries into your vault as one note per meeting. Each note has the title, date, participants, summary, action items as tasks and a link back to the recording. It syncs again from where it stopped and does not make a note again after you delete it.
+Call Notes Sync copies your Fathom meeting summaries into your vault as one note per meeting. Each note has the title, date, participants, summary, action items as tasks and a link back to the recording. It syncs again from where it stopped.
 
 Unofficial. This plugin is not made by, affiliated with or approved by Fathom. Fathom is a mark of its owner. The plugin only reads your own meetings through the public Fathom API, with an API key that you make yourself in your own Fathom account.
 
@@ -54,7 +54,7 @@ A note template sets the body of each new note. Its tokens are `{{header}}`, `{{
 
 ### Tags, properties and attendee links (Pro)
 
-Tags add a `tags` list to the properties of each new note. Extra properties add one `name: value` line for each line that you write. A value can use tokens such as `{{title}}`, `{{date}}` and `{{duration}}`. `{{participant_links}}` alone makes a list of `[[wiki links]]`, one for each attendee, so each meeting connects to your person notes. The built-in properties stay, and a note that exists does not change.
+Tags add a `tags` list to the properties of each new note. Extra properties add one `name: value` line for each line that you write. A value can use tokens such as `{{title}}`, `{{date}}` and `{{duration}}`. `{{participant_links}}` alone makes a list of `[[wiki links]]`, one for each attendee, so each meeting connects to your person notes. The built-in properties stay.
 
 <img src="https://raw.githubusercontent.com/theluckystrike/call-notes-sync/HEAD/docs/pro-properties.png" alt="A meeting note whose properties hold tags, a type, a list of attendee links and a reviewed switch" width="720">
 
@@ -72,13 +72,15 @@ Save the key, run "Sync now" and open the folder "Meetings". A meeting younger t
 
 ## Settings
 
-The settings are the key, the folder, the file name tokens `{title}`, `{date}`, `{time}`, `{source}` and `{id}`. The Pro group holds the rest. Check Fathom key sends one request to test the key.
+After a minor or major update, this plugin opens one What's new tab in the background. The tab and settings card suggest other NoteMods plugins and Zovo Chat and link to notemods.com for feedback ([privacy](https://notemods.com/privacy/)). The tab sends no data. Turn the tab off in Settings.
+
+The settings are the key, the folder, the file name tokens `{title}`, `{date}`, `{time}`, `{source}` and `{id}`. The Pro group holds the rest.
 
 ## FAQ
 
 ### Is this allowed by Fathom?
 
-Fathom is not involved in this plugin and has not approved it. The plugin runs on your device and uses your own key, which Fathom describes as the way to reach your own meetings for personal automation. Fathom's terms apply to your account and your use of its API, so read them before you sync.
+The plugin runs on your device and uses your own key, which Fathom describes as the way to reach your own meetings for personal automation. Fathom's terms apply to your account and your use of its API, so read them before you sync.
 
 ### Does a note update when the summary changes in Fathom?
 
@@ -102,7 +104,7 @@ The core features are free. Pro features need a GitHub Sponsors sponsorship of t
 
 GitHub handles the payment. Sponsor at https://github.com/sponsors/theluckystrike. You need a Fathom account for every feature, free or Pro. Pro also needs the GitHub account that sponsors.
 
-Call Notes Sync talks to Fathom at `https://api.fathom.ai/external/v1/meetings`, and only after you save a Fathom API key in the settings. With no key it sends no request. Each request carries the key in the X-Api-Key header. The requests only read. They send a date window and a page position, and with Pro filters nothing else, because the filters run in the plugin. Check Fathom key sends one request with the key and nothing else. Fathom sends back, for each meeting in the window, the title, date, the web link, the recorder and the invitees (names and email addresses), the summary and the action items, and with the Pro transcript also every spoken sentence with its speaker name and time. The plugin keeps in your vault only what it writes into the notes. It writes the title, date, length, link, participant names (the email address only for a person who has no name), summary and action items, and with Pro the transcript, tags and extra properties. The sync state in data.json holds the meeting ids with the note paths, the time of the newest meeting and the last sync time. It does not keep email addresses, summaries or transcripts. It sends nothing to any other host and has no telemetry. Meeting notes can hold personal data of other people. You decide whether to connect Fathom and which meetings to sync. Your key can read only the meetings that Fathom lets that key see (the ones you recorded and the ones shared with you or your team), and Fathom documents API keys for your own tools and personal automation. Call Notes Sync is an unofficial plugin. It is not affiliated with, made by or approved by Fathom. Fathom is a mark of its owner.
+Call Notes Sync talks to Fathom at `https://api.fathom.ai/external/v1/meetings`, and only after you save a Fathom API key in the settings. Each request carries the key in the X-Api-Key header. The requests only read. They send a date window and a page position, and with Pro filters nothing else, because the filters run in the plugin. Check Fathom key sends one request with the key and nothing else. Fathom sends back, for each meeting in the window, the title, date, the web link, the recorder and the invitees (names and email addresses), the summary and the action items, and with the Pro transcript also every spoken sentence with its speaker name and time. The plugin keeps in your vault only what it writes into the notes. It writes the title, date, length, link, participant names (the email address only for a person who has no name), summary and action items, and with Pro the transcript, tags and extra properties. The sync state in data.json holds the meeting ids with the note paths, the time of the newest meeting and the last sync time. It does not keep email addresses, summaries or transcripts. It sends nothing to any other host and has no telemetry. Meeting notes can hold personal data of other people. You decide whether to connect Fathom and which meetings to sync. Your key can read only the meetings that Fathom lets that key see (the ones you recorded and the ones shared with you or your team).
 
 Until you select "Sign in with GitHub" in the settings, Call Notes Sync sends nothing to GitHub. Sign in uses the GitHub device flow. Call Notes Sync sends its public client ID and the scope `read:user` to `https://github.com/login/device/code` and shows you a code. While you enter the code at https://github.com/login/device, it asks `https://github.com/login/oauth/access_token` every few seconds to check the sign-in status. The scope permits profile reads only. GitHub needs this access to show the sponsorship tier. It grants no repository scope and no write access.
 

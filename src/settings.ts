@@ -15,6 +15,7 @@ import {
 } from './logic';
 import { PRO_UI, isPro } from './pro';
 import type CallNotesSyncPlugin from './main';
+import { helloSettingItems } from './hello/settings';
 
 export interface CallNotesSyncSettings {
 	/** Name of the secret in Obsidian secret storage. The key itself is never in data.json. */
@@ -144,6 +145,11 @@ export class CallNotesSyncSettingTab extends PluginSettingTab {
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
+		// The product rows, then the "More from NoteMods" card (packages/hello).
+		return [...this.productSettingDefinitions(), ...helloSettingItems()];
+	}
+
+	productSettingDefinitions(): SettingDefinitionItem[] {
 		const example = renderFileName(this.plugin.settings.template, SAMPLE, 0);
 		return [
 			...(this.plugin.pro ? sponsorsSettingItems(this.plugin.pro, PRO_UI) : []),
