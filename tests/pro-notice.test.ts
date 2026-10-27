@@ -72,6 +72,26 @@ describe('Pro settings', () => {
 		expect(plugin.settings.tags).toBe('');
 	});
 
+	it('a free user who types a partial date in a date filter gets no format error, so the Pro notice shows at the first key', async () => {
+		const { tab } = await setup(false);
+		const rows = tab.productSettingDefinitions().flatMap((d) => ((d as { items?: unknown[] }).items ?? [d]) as { name: string; control?: { validate?: (v: string) => unknown } }[]);
+		for (const name of ['Only meetings from (Pro)', 'Only meetings until (Pro)']) {
+			const validate = rows.find((r) => r.name === name)!.control!.validate!;
+			expect(await validate('2')).toBeUndefined();
+			expect(await validate('2026-13-45')).toBeUndefined();
+		}
+	});
+
+	it('a Pro user who types a partial date in a date filter gets the format error', async () => {
+		const { tab } = await setup(true);
+		const rows = tab.productSettingDefinitions().flatMap((d) => ((d as { items?: unknown[] }).items ?? [d]) as { name: string; control?: { validate?: (v: string) => unknown } }[]);
+		for (const name of ['Only meetings from', 'Only meetings until']) {
+			const validate = rows.find((r) => r.name === name)!.control!.validate!;
+			expect(await validate('2')).toBe('Use YYYY-MM-DD.');
+			expect(await validate('2026-01-01')).toBeUndefined();
+		}
+	});
+
 	it('a free user can still change the free settings', async () => {
 		const { plugin, tab, shown } = await setup(false);
 		await tab.setControlValue('folder', 'Calls');

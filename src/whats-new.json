@@ -1,9 +1,10 @@
 {
 	"id": "call-notes-sync",
 	"name": "Call Notes Sync",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"changes": [
-		"The Pro settings now show how to get Pro, with a Sponsor on GitHub button, when you select them without Pro. Nothing is saved until Pro is on."
+		"Without Pro, a key in Only meetings from or until shows the Pro notice at once.",
+		"The field stays empty."
 	],
 	"tip": "A meeting younger than 48 hours with no summary and no action items is not ready yet. A later Sync now takes it.",
 	"thanks": "Hi, I am Michael, a solo developer in Poland. Call Notes Sync is one of over 100 small plugins that I make. Thank you for using it to bring your meetings into Obsidian.",

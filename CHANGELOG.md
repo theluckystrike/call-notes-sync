@@ -1,5 +1,11 @@
 # call-notes-sync
 
+## 1.2.2
+
+### Patch Changes
+
+- d1806d1: Without Pro, a key in Only meetings from or until shows the Pro notice at once. The field stays empty.
+
 ## 1.2.1
 
 ### Patch Changes

@@ -140,6 +140,9 @@ export class CallNotesSyncSettingTab extends PluginSettingTab {
 		const s = this.plugin.settings;
 		const on = isPro();
 		const tag = on ? '' : ' (Pro)';
+		// Without Pro the date check gives no error, so the first key goes to setControlValue: the Pro notice shows
+		// and the field shows the value in effect again.
+		const dayError = (v: string): string | undefined => (!isPro() || v.trim() === '' || normalizeDay(v) !== '' ? undefined : 'Use YYYY-MM-DD.');
 		return {
 			type: 'group',
 			heading: on ? 'Pro features' : 'Pro features (off until you sponsor)',
@@ -156,8 +159,8 @@ export class CallNotesSyncSettingTab extends PluginSettingTab {
 					desc: 'One "name: value" for each line, added to the properties of each new note. Tokens: {{title}}, {{date}}, {{time}}, {{duration}}, {{participants}}, {{participant_links}}, {{link}}, {{source}}, {{id}}. {{participants}} or {{participant_links}} alone as the value makes a list. {{participant_links}} gives [[wiki links]] to person notes. A line with a built in name is left out.',
 					control: { type: 'textarea', key: 'props', defaultValue: '', placeholder: 'type: call\nattendees: {{participant_links}}\nreviewed: false', rows: 4 },
 				},
-				{ name: `Only meetings from${tag}`, desc: 'Date as YYYY-MM-DD. Meetings before it are left out. Empty: no limit.', control: { type: 'text', key: 'filterFrom', defaultValue: '', placeholder: '2026-01-01', validate: (v: string) => (v.trim() === '' || normalizeDay(v) !== '' ? undefined : 'Use YYYY-MM-DD.') } },
-				{ name: `Only meetings until${tag}`, desc: 'Date as YYYY-MM-DD. Meetings after it are left out. Empty: no limit.', control: { type: 'text', key: 'filterTo', defaultValue: '', placeholder: '2026-12-31', validate: (v: string) => (v.trim() === '' || normalizeDay(v) !== '' ? undefined : 'Use YYYY-MM-DD.') } },
+				{ name: `Only meetings from${tag}`, desc: 'Date as YYYY-MM-DD. Meetings before it are left out. Empty: no limit.', control: { type: 'text', key: 'filterFrom', defaultValue: '', placeholder: '2026-01-01', validate: dayError } },
+				{ name: `Only meetings until${tag}`, desc: 'Date as YYYY-MM-DD. Meetings after it are left out. Empty: no limit.', control: { type: 'text', key: 'filterTo', defaultValue: '', placeholder: '2026-12-31', validate: dayError } },
 				{ name: `Only meetings with${tag}`, desc: 'Names or emails, separated by commas. A meeting stays when one participant contains one of them. Empty: all meetings.', control: { type: 'text', key: 'filterParticipants', defaultValue: '', placeholder: 'maria, ops@example.com' } },
 				{ name: `Link in the daily note${tag}`, desc: 'Adds a line with a link to each new note in the daily note of the meeting day. It never makes a daily note.', control: { type: 'toggle', key: 'dailyOn', defaultValue: false } },
 				{ name: 'Daily note folder', desc: 'Folder of your daily notes. Empty: the vault root.', control: { type: 'text', key: 'dailyFolder', defaultValue: '', placeholder: 'Daily' } },
