@@ -1,4 +1,4 @@
-import { PluginSettingTab, type SettingDefinitionItem } from 'obsidian';
+import { PluginSettingTab, type Notice, type SettingDefinitionItem } from 'obsidian';
 import { sponsorsSettingItems } from './license/github-obsidian';
 import {
 	DEFAULT_BODY,
@@ -13,7 +13,7 @@ import {
 	renderFileName,
 	type Meeting,
 } from './logic';
-import { PRO_UI, isPro } from './pro';
+import { PRO_LEADS, PRO_UI, isPro, proNotice } from './pro';
 import type CallNotesSyncPlugin from './main';
 import { helloSettingItems } from './hello/settings';
 
@@ -102,7 +102,30 @@ export class CallNotesSyncSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	/** The last Pro notice of this tab. A second notice does not show while it is open. */
+	private notice: Notice | null = null;
+
+	getControlValue(key: string): unknown {
+		// A free user sees the values in effect without Pro. The stored choice stays for the time that Pro comes back.
+		if (PRO_LEADS[key] !== undefined && !isPro()) {
+			if (key === 'transcript' || key === 'dailyOn') return false;
+			return key === 'body' ? DEFAULT_BODY : '';
+		}
+		return super.getControlValue(key);
+	}
+
 	async setControlValue(key: string, value: unknown): Promise<void> {
+		const lead = PRO_LEADS[key];
+		if (lead !== undefined && !isPro()) {
+			// A free user selected a Pro setting: tell how to get Pro and save nothing.
+			if (!this.notice?.messageEl.isConnected) this.notice = proNotice(lead);
+			// Obsidian does not draw a control again while it has the focus. Move the focus out, then draw the tab
+			// again, so the control shows the value in effect.
+			const active = this.containerEl.ownerDocument.activeElement as HTMLElement | null;
+			if (active && this.containerEl.contains(active)) active.blur();
+			this.update();
+			return;
+		}
 		this.plugin.settings = normalizeSettings({ ...this.plugin.settings, [key]: value });
 		await this.plugin.persist();
 	}

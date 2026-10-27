@@ -1,5 +1,11 @@
 # call-notes-sync
 
+## 1.2.1
+
+### Patch Changes
+
+- ef6fe16: The Pro settings now show how to get Pro, with a Sponsor on GitHub button, when you select them without Pro. Nothing is saved until Pro is on.
+
 ## 1.2.0
 
 ### Minor Changes
