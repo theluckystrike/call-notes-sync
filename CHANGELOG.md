@@ -1,5 +1,11 @@
 # call-notes-sync
 
+## 1.2.3
+
+### Patch Changes
+
+- d77bbd4: When the settings refuse a Pro choice, for example in Link in the daily note (Pro), the keyboard focus now stays on that setting. In a text field the focus leaves the field, as before.
+
 ## 1.2.2
 
 ### Patch Changes

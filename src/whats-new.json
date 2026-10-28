@@ -1,10 +1,10 @@
 {
 	"id": "call-notes-sync",
 	"name": "Call Notes Sync",
-	"version": "1.2.2",
+	"version": "1.2.3",
 	"changes": [
-		"Without Pro, a key in Only meetings from or until shows the Pro notice at once.",
-		"The field stays empty."
+		"When the settings refuse a Pro choice, for example in Link in the daily note (Pro), the keyboard focus now stays on that setting.",
+		"In a text field the focus leaves the field, as before."
 	],
 	"tip": "A meeting younger than 48 hours with no summary and no action items is not ready yet. A later Sync now takes it.",
 	"thanks": "Hi, I am Michael, a solo developer in Poland. Call Notes Sync is one of over 100 small plugins that I make. Thank you for using it to bring your meetings into Obsidian.",
