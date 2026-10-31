@@ -102,7 +102,7 @@ No. It needs a personal Fathom API key.
 
 The core features are free. Pro features need a GitHub Sponsors sponsorship of theluckystrike: $5 a month or more, or $15 once. A total payment of $15 meets the payment requirement for Pro without further payment. Sign-in and the checks below still apply. Your notes stay readable and editable with or without Pro.
 
-GitHub handles the payment. Sponsor at https://github.com/sponsors/theluckystrike. You need a Fathom account for every feature, free or Pro. Pro also needs the GitHub account that sponsors.
+GitHub handles the payment. Sponsor at https://github.com/sponsors/theluckystrike?frequency=one-time&metadata_source=call-notes-sync. You need a Fathom account for every feature, free or Pro. Pro also needs the GitHub account that sponsors.
 
 Call Notes Sync talks to Fathom at `https://api.fathom.ai/external/v1/meetings`, and only after you save a Fathom API key in the settings. Each request carries the key in the X-Api-Key header. The requests only read. They send a date window and a page position, and with Pro filters nothing else, because the filters run in the plugin. Check Fathom key sends one request with the key and nothing else. Fathom sends back, for each meeting in the window, the title, date, the web link, the recorder and the invitees (names and email addresses), the summary and the action items, and with the Pro transcript also every spoken sentence with its speaker name and time. The plugin keeps in your vault only what it writes into the notes. It writes the title, date, length, link, participant names (the email address only for a person who has no name), summary and action items, and with Pro the transcript, tags and extra properties. The sync state in data.json holds the meeting ids with the note paths, the time of the newest meeting and the last sync time. It does not keep email addresses, summaries or transcripts. It sends nothing to any other host and has no telemetry. Meeting notes can hold personal data of other people. You decide whether to connect Fathom and which meetings to sync. Your key can read only the meetings that Fathom lets that key see (the ones you recorded and the ones shared with you or your team).
 
@@ -114,7 +114,7 @@ After a successful check, Pro can work offline for up to 14 days. Sign out or a 
 
 ## Support
 
-Report bugs and feature requests in this repository's issue tracker. To support the work, use [GitHub Sponsors](https://github.com/sponsors/theluckystrike).
+Report bugs and feature requests in this repository's issue tracker. To support the work, use [GitHub Sponsors](https://github.com/sponsors/theluckystrike?frequency=one-time&metadata_source=call-notes-sync).
 
 ```
 npm ci
