@@ -1,5 +1,11 @@
 # call-notes-sync
 
+## 1.2.4
+
+### Patch Changes
+
+- ae29d99: The Pro notice of Call Notes Sync now says that one payment turns on Pro in every NoteMods plugin.
+
 ## 1.2.3
 
 ### Patch Changes
