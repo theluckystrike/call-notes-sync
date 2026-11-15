@@ -4,6 +4,7 @@ import { App } from 'obsidian-test-mocks/obsidian';
 import { MeetingClient, classify, fathomQuery, type Http, type HttpReply, type HttpRequest } from '../src/client';
 import { MAX_BATCHES, MIN_GAP_MS, SyncService, emptyState, normalizeState, summary, type SyncOptions } from '../src/sync';
 import { NO_FILTERS } from '../src/logic';
+import { budget } from './time-scale';
 
 const NOW = Date.parse('2026-10-11T00:00:00Z');
 /** The page size of the stub. Fathom sets the real one. */
@@ -230,7 +231,7 @@ describe('sync with Fathom', () => {
 		const res2 = await r.svc.run();
 		expect(res2).toMatchObject({ more: false, created: 100 });
 		expect(r.svc.state.cursors.fathom).toEqual({ since: '2026-10-09T00:00:00Z', until: null, high: null });
-	}, 30_000);
+	}, budget(30_000));
 
 	it('a young meeting without a summary waits and is made on a later run', async () => {
 		const r = rig([row('aaaa1', 10, { default_summary: null, action_items: [] })]);
@@ -253,7 +254,7 @@ describe('sync with Fathom', () => {
 		expect(await r.svc.run()).toMatchObject({ more: true, created: PAGE * MAX_BATCHES });
 		expect(await r.svc.run()).toMatchObject({ more: false, created: 1 });
 		expect(Object.keys(r.svc.state.meetings)).toHaveLength(PAGE * MAX_BATCHES + 1);
-	}, 30_000);
+	}, budget(30_000));
 
 	it('adopts a note with the same meeting id when the sync state is lost', async () => {
 		const r = rig([row('aaaa1', 8)]);

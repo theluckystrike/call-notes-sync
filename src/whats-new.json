@@ -1,7 +1,7 @@
 {
 	"id": "call-notes-sync",
 	"name": "Call Notes Sync",
-	"version": "1.2.4",
+	"version": "1.2.5",
 	"changes": [
 		"The Pro notice of Call Notes Sync now says that one payment turns on Pro in every NoteMods plugin."
 	],
